@@ -196,10 +196,8 @@ def main(argv=None):
             """)
     slider.js_on_change("value", custom_js)
 
-    menu = []
-    for k, _ in config.patterns:
-        menu.append((k, k))
-
+    dataset_names = [k for k, _ in config.patterns]
+    menu = [(k, k) for k in dataset_names]
     layers_ui = layers.LayersUI(menu)
 
     div = bokeh.models.Div(text="", width=10)
