@@ -5,6 +5,7 @@ import bokeh.colors
 import os
 from forest import _profile as profile
 from forest import (
+        barc,
         drivers,
         screen,
         tools,
@@ -239,6 +240,7 @@ def main(argv=None):
     # Connect tools controls
 
     display_names = {
+            "BARC": "Bokeh annotation and reporting component",
             "time_series": "Display Time Series",
             "profile": "Display Profile"
         }
@@ -389,6 +391,32 @@ def main(argv=None):
         profile_args.map(print)  # Note: map(print) creates None stream
 
         tool_figures["profile_figure"] = profile_figure
+
+    if config.features["BARC"]:
+        # Profile sub-figure widget
+        profile_figure = bokeh.plotting.figure(
+                    plot_width=300,
+                    plot_height=450,
+                    toolbar_location=None,
+                    border_fill_alpha=0)
+        profile_figure.toolbar.logo = None
+        profile_figure.y_range.flipped = True
+
+        profile_view = profile.ProfileView.from_groups(
+                profile_figure,
+                config.file_groups)
+        profile_view.add_subscriber(store.dispatch)
+        profile_args = (rx.Stream()
+                    .listen_to(store)
+                    .map(profile.select_args)
+                    .filter(lambda x: x is not None)
+                    .distinct())
+        profile_args.map(lambda a: profile_view.render(*a))
+        profile_args.map(print)  # Note: map(print) creates None stream
+
+        tool_figures["profile_figure"] = profile_figure
+
+
 
     tool_layout = tools.ToolLayout(**tool_figures)
     tool_layout.connect(store)
