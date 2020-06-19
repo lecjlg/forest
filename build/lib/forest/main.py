@@ -106,10 +106,6 @@ def main(argv=None):
         datasets[group.label] = dataset
         datasets_by_pattern[group.pattern] = dataset
         label_to_pattern[group.label] = group.pattern
-        
-        
-        
-    # print('\n\n\n\n', datasets, '\n\n\n\n')
 
     # Lakes
     for figure in figures:
@@ -236,7 +232,7 @@ def main(argv=None):
     #barc_toolbar=bokeh.models.tools.Toolbar(tools=barc_tools,logo=None)
     if data.FEATURE_FLAGS["BARC"]:
          barc = BARC(figures)
-         tools_panel.layout.children.append(barc.ToolBar())
+         tools_panel.layout.children.extend(barc.ToolBar())
 
     # Navbar components
     navbar = Navbar(show_diagram_button=len(available_features) > 0)
@@ -256,7 +252,6 @@ def main(argv=None):
         tile_picker = forest.components.TilePicker()
         for figure in figures:
             tile_picker.add_figure(figure)
-            
         tile_picker.connect(store)
 
     # Connect color palette controls
@@ -448,17 +443,14 @@ class Navbar:
         # Add button to control right drawer
         key = "diagrams_button"
         self.buttons[key] = bokeh.models.Button(
-            label = '',# label="Diagrams",# now contains the barc logo
-            css_classes=["float-right",'barc_btn'],
+            label="Diagrams",
+            css_classes=["float-right"],
             name=key)
-            
         custom_js = bokeh.models.CustomJS(code="""
-         document.getElementById('diagrams').style.width='310px';
-         hide_menus();
+            openId("diagrams");
         """)
-        
         self.buttons[key].js_on_click(custom_js)
-        
+
         roots = [
             self.buttons["sidenav_button"],
             self.headline.layout,
