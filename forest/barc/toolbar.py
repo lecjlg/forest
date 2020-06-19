@@ -1,12 +1,14 @@
 import bokeh.models
-from bokeh.models import ColumnDataSource
+from bokeh.models import ColumnDataSource, Paragraph
 from bokeh.models.glyphs import Text
 from bokeh.core.properties import value
 from bokeh.models.tools import PolyDrawTool, PointDrawTool, ToolbarBox,FreehandDrawTool, ProxyToolbar, Toolbar
 from bokeh.events import ButtonClick
 from forest import wind, data
+from . import front
 
 class BARC:
+    ''' A class for the BARC features - more documentation needed. ''' 
     barcTools = None
     def __init__(self, figures):
         self.figures = figures
@@ -18,6 +20,8 @@ class BARC:
         self.source_text_stamp.add([],"datasize")
         self.source_text_stamp.add([],"fontsize")
         self.source_text_stamp.add([],"colour")
+    
+        ''' For each figure supplied (if multiple) ''' 
         for figure in self.figures:
             barc_tools = [
                 self.polyLine(),
@@ -29,6 +33,7 @@ class BARC:
 
 
     def polyLine(self):
+        ''' Freehand Tool '''
         render_lines = []
         for figure in self.figures:
             render_lines.append(  figure.multi_line(
@@ -49,7 +54,8 @@ class BARC:
             bokeh.models.CustomJS(args=dict(datasource = self.source_polyline, starting_font_size="30px", starting_colour="red", text=Text()), code="""
             console.log(datasource.data);
                 """)
-        )
+            )
+            
         return tool2
 
     def textStamp(self):
@@ -130,41 +136,85 @@ class BARC:
 
         tool4 = PointDrawTool(
                     renderers=render_lines,
-                    custom_icon = 'forest/wind/barb.png',
-                    tags= ['barcwindbarb']
+                    tags= ['barcwindbarb'],
+                    custom_icon = wind.__file__.replace('__init__.py','barb.png')
                     )
+                    
         return tool4
 
-    def ToolBar(self):
+
+    def weatherFront(self,figure,fid:int):
+        ''' 
+        The weatherfront function of barc
+
+        Arguments:
+            Figure - bokeh figure 
+            fid (int) - figure index / order
+        
+        Returns:
+            List of custom toolbar elements
+        '''
+        
+        # function to update plot ranges in js
+        figure.x_range.js_on_change('start', front.range_change(figure,fid))
+        
+        # add draw items to toolbar
         toolbars = []
-        for figure in self.figures:
-            toolbars.append( figure.toolbar)
-            self.barcTools.children.append(
-                ToolbarBox(toolbar=figure.toolbar, toolbar_location="above", visible=True)
+        for front_type in 'warm cold occluded stationary'.split():
+            toolbars.append( front.front(self,figure,front_type,fid) )
+        
+        return toolbars #Toolbar(tools = toolbars)
+
+#####################################
+#####################################
+
+
+    def ToolBar(self):
+        toolBarBoxes = []
+        for i, figure in enumerate(self.figures):
+            ### label toolbars
+            toolBarBoxes.append(
+                Paragraph(
+                text="""Toolbar: Figure %d"""%(i+1),
+                width=200, height=18,
+                css_classes=['barc_p','barc_g%d'%i]
+                )
+            )
+
+            
+            figure.add_tools(*self.weatherFront(figure,i))
+
+            toolBarBoxes.append(
+                 ToolbarBox(
+                     toolbar = figure.toolbar,
+                     toolbar_location = "below",
+                     css_classes=['barc_g%d'%i]
+                 )
             )
         #tools = sum([ toolbar.tools for toolbar in toolbars ], [])
         #tools.append(self.polyLine())
         freehandbutton = bokeh.models.widgets.Button(label="Freehand")
         freehands = list(self.barcTools.select({'tags': ['barcfreehand']}))
-        freehandbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(freehands=freehands, toolbars=toolbars), code="""
+        freehandbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(freehands=freehands), code="""
             var each;
             for(each of freehands) { each.active = true; } 
             """))
 
         windbarbbutton = bokeh.models.widgets.Button(label="windbarb")
         windbarbs = list(self.barcTools.select({'tags': ['barcwindbarb']}))
-        windbarbbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(windbarbs=windbarbs, toolbars=toolbars), code="""
+        windbarbbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(windbarbs=windbarbs), code="""
             var each;
             for(each of windbarbs) { each.active = true; } 
             """))
 
         textstampbutton = bokeh.models.widgets.Button(label="textstamp")
         textstamps = list(self.barcTools.select({'tags': ['barctextstamp']}))
-        textstampbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(textstamps=textstamps, toolbars=toolbars), code="""
+        textstampbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(textstamps=textstamps), code="""
             var each;
             for(each of textstamps) { each.active = true; } 
             """))
 
+        self.barcTools.children.extend( toolBarBoxes )
         self.barcTools.children.extend( [freehandbutton, windbarbbutton, textstampbutton])
 
 
