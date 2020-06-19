@@ -191,6 +191,7 @@ class BARC:
                      css_classes=['barc_g%d'%i]
                  )
             )
+        self.barcTools.children.extend( toolBarBoxes )
         #tools = sum([ toolbar.tools for toolbar in toolbars ], [])
         #tools.append(self.polyLine())
         freehandbutton = bokeh.models.widgets.Button(label="Freehand")
@@ -214,7 +215,6 @@ class BARC:
             for(each of textstamps) { each.active = true; } 
             """))
 
-        self.barcTools.children.extend( toolBarBoxes )
         self.barcTools.children.extend( [freehandbutton, windbarbbutton, textstampbutton])
 
 
