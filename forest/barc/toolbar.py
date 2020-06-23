@@ -194,28 +194,40 @@ class BARC:
         self.barcTools.children.extend( toolBarBoxes )
         #tools = sum([ toolbar.tools for toolbar in toolbars ], [])
         #tools.append(self.polyLine())
-        freehandbutton = bokeh.models.widgets.Button(label="Freehand")
+        freehandbutton = bokeh.models.widgets.Button(
+                label="🖉",
+            css_classes = ['barc-freehand-button','barc-button'],
+            aspect_ratio =1,
+                )
         freehands = list(self.barcTools.select({'tags': ['barcfreehand']}))
         freehandbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(freehands=freehands), code="""
             var each;
             for(each of freehands) { each.active = true; } 
             """))
 
-        windbarbbutton = bokeh.models.widgets.Button(label="windbarb")
+        windbarbbutton = bokeh.models.widgets.Button(
+            label="wb",
+            css_classes = ['barc-windbarb-button','barc-button'],
+            aspect_ratio =1,
+            )
         windbarbs = list(self.barcTools.select({'tags': ['barcwindbarb']}))
         windbarbbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(windbarbs=windbarbs), code="""
             var each;
             for(each of windbarbs) { each.active = true; } 
             """))
 
-        textstampbutton = bokeh.models.widgets.Button(label="textstamp")
+        textstampbutton = bokeh.models.widgets.Button(
+            label="🌧",
+            css_classes = ['barc-textstamp-button','barc-button'],
+            aspect_ratio =1,
+            )
         textstamps = list(self.barcTools.select({'tags': ['barctextstamp']}))
         textstampbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(textstamps=textstamps), code="""
             var each;
             for(each of textstamps) { each.active = true; } 
             """))
 
-        self.barcTools.children.extend( [freehandbutton, windbarbbutton, textstampbutton])
+        self.barcTools.children.append( bokeh.models.layouts.Row(children=[freehandbutton, windbarbbutton, textstampbutton]))
 
 
         return self.barcTools

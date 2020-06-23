@@ -158,6 +158,22 @@ div.barc_p div p{
     color:whitesmoke!important;
 }
 
+div#diagrams.diagrams div.barc-button {
+    border: solid 1px fuchsia;
+    display: inline-block;
+}
+
+div#diagrams.diagrams div.barc-windbarb-button button {
+    background-image: url("barb.png");
+    color: transparent;
+}
+div#diagrams.diagrams div.barc-button button {
+    color: black;
+    background-size: 100%;
+    width:100%;
+    font-size: larger;
+}
+
 /* wrap toolbar */
 .bk-root .bk-toolbar.bk-below .bk-toolbar-button, .bk .bk-toolbar   { 
   -webkit-flex-wrap: wrap!important;
