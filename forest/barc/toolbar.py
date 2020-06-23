@@ -51,8 +51,8 @@ class BARC:
                     name="barcfreehand"
                     )
         self.source_polyline.js_on_change('data', 
-            bokeh.models.CustomJS(args=dict(datasource = self.source_polyline, starting_font_size="30px", starting_colour="red", text=Text()), code="""
-            console.log(datasource.data);
+            bokeh.models.CustomJS(args=dict(), code="""
+            console.log(pans);
                 """)
             )
             
@@ -228,6 +228,7 @@ class BARC:
             """))
 
         self.barcTools.children.append( bokeh.models.layouts.Row(children=[freehandbutton, windbarbbutton, textstampbutton]))
+        print(list(self.barcTools.select({'tool_name':'Pan'})))
 
 
         return self.barcTools

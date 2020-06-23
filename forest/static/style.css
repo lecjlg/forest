@@ -163,9 +163,9 @@ div#diagrams.diagrams div.barc-button {
     display: inline-block;
 }
 
-div#diagrams.diagrams div.barc-windbarb-button button {
+div#diagrams.diagrams div.barc-button.barc-windbarb-button button {
     background-image: url("barb.png");
-    color: transparent;
+    color: transparent!important;
 }
 div#diagrams.diagrams div.barc-button button {
     color: black;
