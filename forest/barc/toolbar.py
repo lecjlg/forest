@@ -162,7 +162,9 @@ class BARC:
         # add draw items to toolbar
         toolbars = []
         for front_type in 'warm cold occluded stationary'.split():
-            toolbars.append( front.front(self,figure,front_type,fid) )
+            fronttool =  front.front(self,figure,front_type,fid)
+            fronttool.tags = ['barc' + front_type +'front']
+            toolbars.append( fronttool )
         
         return toolbars #Toolbar(tools = toolbars)
 
@@ -211,6 +213,7 @@ class BARC:
                 'boxzoom': "🔍",
                 'wheelzoom': "📜",
                 'reset': "🗘",
+                'warmfront': "⯊"
                 }
         buttons = []
 
@@ -219,6 +222,7 @@ class BARC:
                 label=buttonspec[each],
                 css_classes = ['barc-'+each+'-button','barc-button'],
                 aspect_ratio =1,
+                margin = (0,0,0,0)
             )
             button.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(buttons=list(self.barcTools.select({'tags': ['barc'+each]}))), code="""
                 var each;
