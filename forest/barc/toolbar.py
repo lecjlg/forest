@@ -23,6 +23,7 @@ class BARC:
     
         ''' For each figure supplied (if multiple) ''' 
         for figure in self.figures:
+            figure.toolbar.tools = []
             barc_tools = [
                 self.polyLine(),
                 self.textStamp(),
@@ -52,7 +53,7 @@ class BARC:
                     )
         self.source_polyline.js_on_change('data', 
             bokeh.models.CustomJS(args=dict(), code="""
-            console.log(pans);
+            console.log();
                 """)
             )
             
@@ -177,9 +178,16 @@ class BARC:
                 Paragraph(
                 text="""Toolbar: Figure %d"""%(i+1),
                 width=200, height=18,
-                css_classes=['barc_p','barc_g%d'%i]
+                css_classes=['barc_p','barc_g%d'%i],
                 )
             )
+
+            figure.add_tools(
+                bokeh.models.tools.PanTool(tags=['barcpan']),
+                bokeh.models.tools.WheelZoomTool(tags=['barcwheelzoom']),
+                bokeh.models.tools.ResetTool(tags=['barcreset']),
+                bokeh.models.tools.BoxZoomTool(tags=['barcboxzoom']),
+                )
 
             
             figure.add_tools(*self.weatherFront(figure,i))
@@ -194,41 +202,31 @@ class BARC:
         self.barcTools.children.extend( toolBarBoxes )
         #tools = sum([ toolbar.tools for toolbar in toolbars ], [])
         #tools.append(self.polyLine())
-        freehandbutton = bokeh.models.widgets.Button(
-                label="🖉",
-            css_classes = ['barc-freehand-button','barc-button'],
-            aspect_ratio =1,
-                )
-        freehands = list(self.barcTools.select({'tags': ['barcfreehand']}))
-        freehandbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(freehands=freehands), code="""
-            var each;
-            for(each of freehands) { each.active = true; } 
-            """))
 
-        windbarbbutton = bokeh.models.widgets.Button(
-            label="wb",
-            css_classes = ['barc-windbarb-button','barc-button'],
-            aspect_ratio =1,
+        buttonspec = {
+                'freehand': "🖉",
+                'windbarb': "🚩",
+                'textstamp': "🌧",
+                'pan': "✥",
+                'boxzoom': "🔍",
+                'wheelzoom': "📜",
+                'reset': "🗘",
+                }
+        buttons = []
+
+        for each in buttonspec:
+            button =bokeh.models.widgets.Button(
+                label=buttonspec[each],
+                css_classes = ['barc-'+each+'-button','barc-button'],
+                aspect_ratio =1,
             )
-        windbarbs = list(self.barcTools.select({'tags': ['barcwindbarb']}))
-        windbarbbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(windbarbs=windbarbs), code="""
-            var each;
-            for(each of windbarbs) { each.active = true; } 
+            button.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(buttons=list(self.barcTools.select({'tags': ['barc'+each]}))), code="""
+                var each;
+                for(each of buttons) { each.active = true; } 
             """))
+            buttons.append(button)
 
-        textstampbutton = bokeh.models.widgets.Button(
-            label="🌧",
-            css_classes = ['barc-textstamp-button','barc-button'],
-            aspect_ratio =1,
-            )
-        textstamps = list(self.barcTools.select({'tags': ['barctextstamp']}))
-        textstampbutton.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(textstamps=textstamps), code="""
-            var each;
-            for(each of textstamps) { each.active = true; } 
-            """))
-
-        self.barcTools.children.append( bokeh.models.layouts.Row(children=[freehandbutton, windbarbbutton, textstampbutton]))
-        print(list(self.barcTools.select({'tool_name':'Pan'})))
+        self.barcTools.children.append( bokeh.models.layouts.Row(children=buttons))
 
 
         return self.barcTools
