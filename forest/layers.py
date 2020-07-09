@@ -14,20 +14,22 @@ import numpy as np
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from typing import Iterable, List
+import forest.mark
+import forest.state
+import forest.actions
 from forest import rx
 from forest.redux import Action, State, Store
 from forest.observe import Observable
+from forest import colors
 import forest.drivers
-import forest.view
+import forest.mark
 
 
-ADD_LAYER = "LAYERS_ADD_LAYER"
 SAVE_LAYER = "LAYERS_SAVE_LAYER"
 ON_ADD = "LAYERS_ON_ADD"
 ON_EDIT = "LAYERS_ON_EDIT"
 ON_CLOSE = "LAYERS_ON_CLOSE"
 ON_SAVE = "LAYERS_ON_SAVE"
-ON_REMOVE = "LAYERS_ON_REMOVE"
 ON_BUTTON_GROUP = "LAYERS_ON_BUTTON_GROUP"
 SET_FIGURES = "LAYERS_SET_FIGURES"
 SET_ACTIVE = "LAYERS_SET_ACTIVE"
@@ -35,10 +37,6 @@ SET_ACTIVE = "LAYERS_SET_ACTIVE"
 
 def set_figures(n: int) -> Action:
     return {"kind": SET_FIGURES, "payload": n}
-
-
-def add_layer(name) -> Action:
-    return {"kind": ADD_LAYER, "payload": name}
 
 
 def save_layer(index, settings) -> Action:
@@ -123,71 +121,54 @@ def next_index(state):
 def reducer(state: State, action: Action) -> State:
     """Combine state and action to produce new state"""
     state = copy.deepcopy(state)
-    kind = action["kind"]
-    if kind in [
-            ADD_LAYER,
-            SET_FIGURES,
-            ON_REMOVE]:
-        layers = state.get("layers", {})
-        state["layers"] = _layers_reducer(layers, action)
-    elif kind == ON_ADD:
-        # Traverse/build tree
-        node = state
-        for key in ("layers", "mode"):
-            node[key] = node.get(key, {})
-            node = node[key]
-        node.update({"state": "add"})
-    elif kind == ON_CLOSE:
-        # Traverse/build tree
-        index = action["payload"]
-        node = state
-        for key in ("layers", "index"):
-            node = node.get(key, {})
-        del node[index]
-    elif kind == ON_EDIT:
-        # Traverse/build tree
-        index = action["payload"]
-        node = state
-        for key in ("layers", "mode"):
-            node[key] = node.get(key, {})
-            node = node[key]
-        node.update({"state": "edit", "index": index})
-    elif kind == SAVE_LAYER:
-        # Traverse/build tree
-        index = action["payload"]["index"]
-        settings = action["payload"]["settings"]
-        node = state
-        for key in ("layers", "index", index):
-            node[key] = node.get(key, {})
-            node = node[key]
-        node.update(settings)
-    elif kind == SET_ACTIVE:
-        # Traverse/build tree
-        index = action["payload"]["row_index"]
-        settings = {"active": action["payload"]["active"]}
-        node = state
-        for key in ("layers", "index", index):
-            node[key] = node.get(key, {})
-            node = node[key]
-        node.update(settings)
-    return state
+    if isinstance(state, dict):
+        state = forest.state.State.from_dict(state)
+    if isinstance(action, dict):
+        try:
+            action = forest.actions.Action.from_dict(action)
+        except TypeError:
+            return state.to_dict()
 
+    if action.kind == SET_FIGURES:
+        state.layers.figures = action.payload
 
-def _layers_reducer(state, action):
-    kind = action["kind"]
-    if kind == SET_FIGURES:
-        state["figures"] = action["payload"]
+    elif action.kind == ON_ADD:
+        state.layers.mode.state = "add"
 
-    elif kind == ADD_LAYER:
-        labels = state.get("labels", [])
-        labels.append(action["payload"])
-        state["labels"] = labels
+    elif action.kind == ON_CLOSE:
+        row_index = action.payload
+        try:
+            layer_index = sorted(state.layers.index.keys())[row_index]
+            del state.layers.index[layer_index]
+        except IndexError:
+            pass
 
-    elif kind == ON_REMOVE:
-        labels = state.get("labels", [])
-        state["labels"] = labels[:-1]
+    elif action.kind == ON_EDIT:
+        row_index = action.payload
+        layer_index = sorted(state.layers.index.keys())[row_index]
+        state.layers.mode.state = "edit"
+        state.layers.mode.index = layer_index
 
-    return state
+    elif action.kind == SAVE_LAYER:
+        # NOTE: Layer index is stored in payload
+        layer_index = action.payload["index"]
+        settings = action.payload["settings"]
+        if layer_index in state.layers.index:
+            state.layers.index[layer_index].update(settings)
+        else:
+            state.layers.index[layer_index] = settings
+
+    elif action.kind == SET_ACTIVE:
+        active = action.payload["active"]
+        row_index = action.payload["row_index"]
+        row_to_layer = sorted(state.layers.index.keys())
+        try:
+            layer_index = row_to_layer[row_index]
+            state.layers.index[layer_index]["active"] = active
+        except IndexError:
+            pass
+
+    return state.to_dict()
 
 
 def _connect(view, store):
@@ -199,16 +180,18 @@ def _connect(view, store):
     stream.map(lambda props: view.render(*props))
 
 
+@forest.mark.component
 class FigureUI(Observable):
     """Controls how many figures are currently displayed"""
-    def __init__(self):
+    def __init__(self, max_figures=3):
+        self.max_figures = max_figures
         self.labels = [
             "Single figure",
             "Side by side",
-            "3 way comparison"]
+            "3 way comparison"][:self.max_figures]
         self.select = bokeh.models.Select(
             options=self.labels,
-            value="Single figure",
+            value=self.labels[0],
             width=350,
         )
         self.select.on_change("value", self.on_change)
@@ -217,9 +200,19 @@ class FigureUI(Observable):
         )
         super().__init__()
 
+    def connect(self, store):
+        self.add_subscriber(store.dispatch)
+        store.add_subscriber(self.render)
+
+    def render(self, state):
+        if isinstance(state, dict):
+            state = forest.state.State.from_dict(state)
+        i = state.layers.figures - 1
+        self.select.value = self.labels[i]
+
     def on_change(self, attr, old, new):
         """Emit action to set number of figures in state"""
-        n = self.labels.index(new) + 1 # Select 0-indexed
+        n = self.labels.index(new) + 1  # Select 0-indexed
         self.notify(set_figures(n))
 
 
@@ -301,6 +294,7 @@ class OpacitySlider:
         return isinstance(getattr(renderer, 'glyph', None), bokeh.models.Image)
 
 
+@forest.mark.component
 class LayersUI(Observable):
     """Collection of user interface components to manage layers"""
     def __init__(self):
@@ -320,10 +314,7 @@ class LayersUI(Observable):
             "close": [],
             "add": bokeh.models.Button(label="New layer", width=110),
         }
-        custom_js = bokeh.models.CustomJS(code="""
-            let el = document.getElementById("modal");
-            el.style.visibility = "visible";
-        """)
+        custom_js = bokeh.models.CustomJS(code="openModal()")
         self.buttons["add"].js_on_click(custom_js)
         self.buttons["add"].on_click(self.on_add)
         self.columns = {
@@ -353,10 +344,10 @@ class LayersUI(Observable):
         )
 
     def parse_layers(self, state):
-        node = state
-        for key in ("layers", "index"):
-            node = node.get(key, {})
-        return [value for _, value in sorted(node.items())]
+        if isinstance(state, dict):
+            state = forest.state.State.from_dict(state)
+        print(state.layers.index)
+        return [value for _, value in sorted(state.layers.index.items())]
 
     def render(self, layers, figure_index):
         """Display latest application state in user interface
@@ -423,10 +414,7 @@ class LayersUI(Observable):
 
         # Edit button
         edit_button = bokeh.models.Button(label="Edit", width=widths["button"])
-        custom_js = bokeh.models.CustomJS(code="""
-            let el = document.getElementById("modal");
-            el.style.visibility = "visible";
-        """)
+        custom_js = bokeh.models.CustomJS(code="openModal()")
         edit_button.js_on_click(custom_js)
         edit_button.on_click(self.on_edit(row_index))
         self.buttons["edit"].append(edit_button)
@@ -487,6 +475,12 @@ class LayerSpec:
     dataset: str = ""
     variable: str = ""
     active: List[int] = field(default_factory=list)
+    color_spec: colors.ColorSpec = colors.ColorSpec()
+    colorbar: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        if isinstance(self.color_spec, dict):
+            self.color_spec = colors.ColorSpec(**self.color_spec)
 
 
 class Gallery:
@@ -542,7 +536,8 @@ class Gallery:
             layer_state = {}
             layer_state.update(state)
             if spec.variable != "":
-                layer_state.update(variable=spec.variable)
+                layer_state.update(variable=spec.variable,
+                                   colorbar=spec.colorbar)
             layer.render(layer_state)
 
             used_layers[key].append(layer)

@@ -16,23 +16,41 @@ from forest import (
         layers,
         db,
         keys,
+        plugin,
         presets,
         redux,
         rx,
         navigate,
         parse_args)
+import forest.app
+import forest.actions
 import forest.components
-from forest.components import tiles
+import forest.components.borders
+import forest.components.title
+from forest.components import tiles, html_ready
 import forest.config as cfg
 import forest.middlewares as mws
 from forest.db.util import autolabel
 
 
-def main(argv=None):
+def map_figure(x_range, y_range):
+    """Adjust Figure settings to present web map tiles"""
+    figure = bokeh.plotting.figure(
+        x_range=x_range,
+        y_range=y_range,
+        x_axis_type="mercator",
+        y_axis_type="mercator",
+        active_scroll="wheel_zoom")
+    figure.axis.visible = False
+    figure.toolbar.logo = None
+    figure.toolbar_location = None
+    figure.min_border = 0
+    return figure
 
+
+def configure(argv=None):
     args = parse_args.parse_args(argv)
     data.AUTO_SHUTDOWN = args.auto_shutdown
-    
     if len(args.files) > 0:
         if args.config_file is not None:
             raise Exception('--config-file and [FILE [FILE ...]] not compatible')
@@ -43,34 +61,29 @@ def main(argv=None):
                 variables=cfg.combine_variables(
                     os.environ,
                     args.variables))
+    return config
+
+
+def main(argv=None):
+    config = configure(argv=argv)
+
+    # Feature toggles
+    if "feature" in config.plugins:
+        features = plugin.call(config.plugins["feature"].entry_point)
+    else:
+        features = config.features
+    data.FEATURE_FLAGS = features
 
     # Full screen map
     viewport = config.default_viewport
     x_range, y_range = geo.web_mercator(
         viewport.lon_range,
         viewport.lat_range)
-    figure = bokeh.plotting.figure(
-        x_range=x_range,
-        y_range=y_range,
-        x_axis_type="mercator",
-        y_axis_type="mercator",
-        active_scroll="wheel_zoom")
-
+    figure = map_figure(x_range, y_range)
     figures = [figure]
     for _ in range(2):
-        f = bokeh.plotting.figure(
-            x_range=figure.x_range,
-            y_range=figure.y_range,
-            x_axis_type="mercator",
-            y_axis_type="mercator",
-            active_scroll="wheel_zoom")
+        f = map_figure(figure.x_range, figure.y_range)
         figures.append(f)
-
-    for f in figures:
-        f.axis.visible = False
-        f.toolbar.logo = None
-        f.toolbar_location = None
-        f.min_border = 0
 
     figure_row = layers.FigureRow(figures)
 
@@ -79,93 +92,26 @@ def main(argv=None):
             high=1,
             palette=bokeh.palettes.Plasma[256])
 
-    # Colorbar user interface
-    colorbar_ui = forest.components.ColorbarUI(color_mapper)
-
     # Convert config to datasets
     datasets = {}
     datasets_by_pattern = {}
     label_to_pattern = {}
-    for group in config.file_groups:
-        settings = {
-            "label": group.label,
-            "pattern": group.pattern,
-            "locator": group.locator,
-            "database_path": group.database_path,
-            "directory": group.directory
-        }
-        dataset = drivers.get_dataset(group.file_type, settings)
+    for group, dataset in zip(config.file_groups, config.datasets):
         datasets[group.label] = dataset
         datasets_by_pattern[group.pattern] = dataset
         label_to_pattern[group.label] = group.pattern
 
-    # Lakes
-    for figure in figures:
-        add_feature(figure, data.LAKES, color="lightblue")
-
-    features = []
-    for figure in figures:
-        features += [
-            add_feature(figure, data.COASTLINES),
-            add_feature(figure, data.BORDERS)]
-
-    # Disputed borders
-    for figure in figures:
-        add_feature(figure, data.DISPUTED, color="red")
-
-    toggle = bokeh.models.CheckboxGroup(
-            labels=["Coastlines"],
-            active=[0],
-            width=135)
-
-    def on_change(attr, old, new):
-        if len(new) == 1:
-            for feature in features:
-                feature.visible = True
-        else:
-            for feature in features:
-                feature.visible = False
-
-    toggle.on_change("active", on_change)
-
-    dropdown = bokeh.models.Dropdown(
-            label="Color",
-            menu=[
-                ("Black", "black"),
-                ("White", "white")],
-            width=50)
-    autolabel(dropdown)
-
-    def on_change(attr, old, new):
-        for feature in features:
-            feature.glyph.line_color = new
-
-    dropdown.on_change("value", on_change)
-
     layers_ui = layers.LayersUI()
-
-    div = bokeh.models.Div(text="", width=10)
-    border_row = bokeh.layouts.row(
-        bokeh.layouts.column(toggle),
-        bokeh.layouts.column(div),
-        bokeh.layouts.column(dropdown))
-
 
     # Add optional sub-navigators
     sub_navigators = {
-        key: dataset.navigator() for key, dataset in datasets_by_pattern.items()
+        key: dataset.navigator()
+        for key, dataset in datasets_by_pattern.items()
         if hasattr(dataset, "navigator")
     }
     navigator = navigate.Navigator(sub_navigators)
 
-    # Pre-select menu choices (if any)
-    initial_state = {}
-    for pattern, _ in sub_navigators.items():
-        initial_state = db.initial_state(navigator, pattern=pattern)
-        break
-
     middlewares = [
-        mws.echo,
         keys.navigate,
         db.InverseCoordinate("pressure"),
         db.next_previous,
@@ -176,24 +122,32 @@ def main(argv=None):
         presets.middleware,
         layers.middleware,
         navigator,
+        mws.echo,
     ]
     store = redux.Store(
-        redux.combine_reducers(
-            db.reducer,
-            layers.reducer,
-            screen.reducer,
-            tools.reducer,
-            colors.reducer,
-            colors.limits_reducer,
-            presets.reducer,
-            tiles.reducer,
-            dimension.reducer),
-        initial_state=initial_state,
+        forest.reducer,
         middlewares=middlewares)
 
+    app = forest.app.Application()
+    app.add_component(forest.components.title.Title())
+
+    # Coastlines, borders, lakes and disputed borders
+    view = forest.components.borders.View()
+    for figure in figures:
+        view.add_figure(figure)
+    view.connect(store)
+    border_ui = forest.components.borders.UI()
+    border_ui.connect(store)
+
+    # Colorbar user interface
+    component = forest.components.ColorbarUI()
+    app.add_component(component)
+
     # Add time user interface
-    time_ui = forest.components.TimeUI()
-    time_ui.connect(store)
+    if config.defaults.timeui:
+        component = forest.components.TimeUI()
+        component.layout = bokeh.layouts.row(component.layout, name="time")
+        app.add_component(component)
 
     # Connect MapView orchestration to store
     opacity_slider = forest.layers.OpacitySlider()
@@ -216,7 +170,7 @@ def main(argv=None):
             "profile": "Display Profile"
         }
     available_features = {k: display_names[k]
-                          for k in display_names.keys() if config.features[k]}
+                          for k in display_names.keys() if data.FEATURE_FLAGS[k]}
 
     tools_panel = tools.ToolsPanel(available_features)
     tools_panel.connect(store)
@@ -230,8 +184,9 @@ def main(argv=None):
     tap_listener.connect(store)
 
     # Connect figure controls/views
-    figure_ui = layers.FigureUI()
-    figure_ui.add_subscriber(store.dispatch)
+    if config.defaults.figures.ui:
+        figure_ui = layers.FigureUI(config.defaults.figures.maximum)
+        figure_ui.connect(store)
     figure_row.connect(store)
 
     # Tiling picker
@@ -241,22 +196,41 @@ def main(argv=None):
             tile_picker.add_figure(figure)
         tile_picker.connect(store)
 
-    # Connect color palette controls
-    color_palette = colors.ColorPalette(color_mapper).connect(store)
+    if not data.FEATURE_FLAGS["multiple_colorbars"]:
+        # Connect color palette controls
+        colors.ColorMapperView(color_mapper).connect(store)
+        color_palette = colors.ColorPalette().connect(store)
 
-    # Connect limit controllers to store
-    user_limits = colors.UserLimits().connect(store)
+        # Connect limit controllers to store
+        user_limits = colors.UserLimits().connect(store)
 
     # Preset
-    preset_ui = presets.PresetUI().connect(store)
+    if config.defaults.presetui:
+        preset_ui = presets.PresetUI().connect(store)
 
     # Connect navigation controls
     controls = db.ControlView()
     controls.connect(store)
 
     # Add support for a modal dialogue
-    modal = forest.components.Modal()
+    if data.FEATURE_FLAGS["multiple_colorbars"]:
+        view = forest.components.modal.Tabbed()
+    else:
+        view = forest.components.modal.Default()
+    modal = forest.components.Modal(view=view)
     modal.connect(store)
+
+    # Connect components to Store
+    app.connect(store)
+
+    # Set initial state
+    store.dispatch(forest.actions.set_state(config.state).to_dict())
+
+    # Pre-select menu choices (if any)
+    for pattern, _ in sub_navigators.items():
+        state = db.initial_state(navigator, pattern=pattern)
+        store.dispatch(forest.actions.update_state(state).to_dict())
+        break
 
     # Set default time series visibility
     store.dispatch(tools.on_toggle_tool("time_series", False))
@@ -285,30 +259,32 @@ def main(argv=None):
         values = navigator.variables(pattern)
         store.dispatch(dimension.set_variables(label, values))
 
-    # Select web map tiling
-    if config.use_web_map_tiles:
-        store.dispatch(tiles.set_tile(tiles.STAMEN_TERRAIN))
-        store.dispatch(tiles.set_label_visible(True))
-
     # Organise controls/settings
     layouts = {}
-    layouts["controls"] = [
-        bokeh.models.Div(text="Layout:"),
-        figure_ui.layout,
+    layouts["controls"] = []
+    if config.defaults.figures.ui:
+        layouts["controls"] += [
+                bokeh.models.Div(text="Layout:"),
+                figure_ui.layout]
+    layouts["controls"] += [
         bokeh.models.Div(text="Navigate:"),
         controls.layout,
         bokeh.models.Div(text="Compare:"),
         layers_ui.layout
     ]
+
     layouts["settings"] = [
-        border_row,
+        bokeh.models.Div(text="Borders, coastlines and lakes:"),
+        border_ui.layout,
         opacity_slider.layout,
-        preset_ui.layout,
-        color_palette.layout,
-        user_limits.layout,
-        bokeh.models.Div(text="Tiles:"),
     ]
+    if not data.FEATURE_FLAGS["multiple_colorbars"]:
+        layouts["settings"].append(color_palette.layout)
+        layouts["settings"].append(user_limits.layout)
+    if config.defaults.presetui:
+        layouts["settings"].append(preset_ui.layout)
     if config.use_web_map_tiles:
+        layouts["settings"].append(bokeh.models.Div(text="Tiles:"))
         layouts["settings"].append(tile_picker.layout)
 
     tabs = bokeh.models.Tabs(tabs=[
@@ -322,7 +298,7 @@ def main(argv=None):
         ])
 
     tool_figures = {}
-    if config.features["time_series"]:
+    if data.FEATURE_FLAGS["time_series"]:
         # Series sub-figure widget
         series_figure = bokeh.plotting.figure(
                     plot_width=400,
@@ -346,7 +322,7 @@ def main(argv=None):
 
         tool_figures["series_figure"] = series_figure
 
-    if config.features["profile"]:
+    if data.FEATURE_FLAGS["profile"]:
         # Profile sub-figure widget
         profile_figure = bokeh.plotting.figure(
                     plot_width=300,
@@ -381,10 +357,13 @@ def main(argv=None):
             tabs,
             name="controls")
 
-
     # Add key press support
     key_press = keys.KeyPress()
     key_press.add_subscriber(store.dispatch)
+
+    # Add HTML ready support
+    obj = html_ready.HTMLReady(key_press.hidden_button)
+    obj.connect(store)
 
     document = bokeh.plotting.curdoc()
     document.title = "FOREST"
@@ -395,12 +374,10 @@ def main(argv=None):
             tool_layout.layout,
             width=400,
             name="series"))
-    document.add_root(
-        bokeh.layouts.row(time_ui.layout, name="time"))
     for root in navbar.roots:
         document.add_root(root)
-    document.add_root(
-        bokeh.layouts.row(colorbar_ui.layout, name="colorbar"))
+    for root in app.roots:
+        document.add_root(root)
     document.add_root(figure_row.layout)
     document.add_root(key_press.hidden_button)
     document.add_root(modal.layout)
@@ -450,14 +427,5 @@ def any_none(obj, attrs):
     return any([getattr(obj, x) is None for x in attrs])
 
 
-def add_feature(figure, data, color="black"):
-    source = bokeh.models.ColumnDataSource(data)
-    return figure.multi_line(
-        xs="xs",
-        ys="ys",
-        source=source,
-        color=color)
-
-
-if __name__.startswith("bk"):
+if __name__.startswith("bokeh"):
     main()

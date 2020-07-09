@@ -6,6 +6,9 @@ forecasts alongside observations.
 
 .. automodule:: forest.redux
 
+.. automodule:: forest.state
+    :members:
+
 .. automodule:: forest.rx
 
 .. automodule:: forest.observe
@@ -22,12 +25,16 @@ forecasts alongside observations.
 
 .. automodule:: forest.presets
 
+.. automodule:: forest.services
+
 """
-__version__ = '0.15.0'
+__version__ = '0.20.7'
 
 from .config import *
 from . import (
+        actions,
         redux,
         tutorial)
 from .db import Database
 from .keys import *
+from .reducer import reducer

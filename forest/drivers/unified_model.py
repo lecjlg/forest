@@ -7,14 +7,18 @@ import fnmatch
 import datetime as dt
 import numpy as np
 import netCDF4
+import sqlite3
+import forest.db
+import forest.db.health
 import forest.util
+import forest.map_view
 from forest import (
     db,
     disk,
-    geo,
-    view)
+    geo)
 from forest.exceptions import SearchFail, PressuresNotFound
 from forest.drivers import gridded_forecast
+import bokeh.models
 try:
     import iris
 except ImportError:
@@ -24,6 +28,56 @@ except ImportError:
 
 class NotFound(Exception):
     pass
+
+
+class Sync:
+    """Process to synchronize SQL database"""
+    def __init__(self, database_path, pattern, directory):
+        self.database_path = database_path
+        self.pattern = pattern
+        self.directory = directory
+
+    def __call__(self):
+        print(f"sync: {self.database_path} {self.pattern} {self.directory}")
+
+        # Find S3 objects
+        paths = glob.glob(self.full_path(self.pattern))
+        s3_names = [os.path.basename(path) for path in paths]
+
+        # Find names in database
+        connection = sqlite3.connect(self.database_path)
+        health_db = forest.db.health.HealthDB(connection)
+        sql_names = [os.path.basename(path)
+                     for path in health_db.checked_files(self.pattern)]
+        connection.close()
+
+        # Find extra files
+        extra_names = set(s3_names) - set(sql_names)
+        extra_paths = [self.full_path(name) for name in extra_names]
+
+        # Add NetCDF files to database
+        if len(extra_paths) > 0:
+            print("connecting to: {}".format(self.database_path))
+            with forest.db.Database.connect(self.database_path) as database:
+                health_db = forest.db.health.HealthDB(database.connection)
+                for path in extra_paths:
+                    print("inserting: '{}'".format(path))
+                    try:
+                        database.insert_netcdf(path)
+                    except OSError as e:
+                        # S3 Glacier objects inaccessible via goofys
+                        health_db.insert_error(path, e, dt.datetime.now())
+                        print(e)
+                        print(f"skip file: {path}")
+                        continue
+            print("finished")
+
+    def full_path(self, name):
+        """Prepend directory if available"""
+        if self.directory is None:
+            return name
+        else:
+            return os.path.join(self.directory, name)
 
 
 class Dataset:
@@ -38,6 +92,9 @@ class Dataset:
         self.pattern = pattern
         self.use_database = locator == "database"
         if self.use_database:
+            self.sync = Sync(database_path,
+                             pattern,
+                             directory)
             self.database = db.get_database(database_path)
             self.locator = db.Locator(self.database.connection,
                                       directory=directory)
@@ -50,10 +107,9 @@ class Dataset:
         else:
             return Navigator(self.pattern)
 
-    def map_view(self, color_mapper):
-        return view.UMView(Loader(self.label,
-                                  self.pattern,
-                                  self.locator), color_mapper)
+    def map_view(self, color_mapper=None):
+        loader = Loader(self.label, self.pattern, self.locator)
+        return forest.map_view.map_view(loader, color_mapper)
 
 
 class Navigator:
@@ -212,7 +268,7 @@ class Loader:
         if lons.ndim == 2:
             lats = lats[:, 0]
         values = cube.data[pts]
-        return lons, lats, values, units
+        return lons, lats, values, str(units)  # Needed for tutorial data
 
 
 class Locator(object):

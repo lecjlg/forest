@@ -10,10 +10,10 @@ from functools import lru_cache
 from forest.exceptions import FileNotFound, IndexNotFound
 from forest.old_state import old_state, unique
 import forest.util
+import forest.map_view
 from forest import (
         geo,
-        locate,
-        view)
+        locate)
 
 
 ENGINE = "h5netcdf"
@@ -28,7 +28,6 @@ def _natargmax(arr):
 
 class Dataset:
     def __init__(self, pattern=None, database_path=None, **kwargs):
-        print("NEW EIDA50 DATASET")
         self.pattern = pattern
         if database_path is None:
             database_path = ":memory:"
@@ -40,7 +39,7 @@ class Dataset:
 
     def map_view(self, color_mapper):
         loader = Loader(self.locator)
-        return view.UMView(loader, color_mapper, use_hover_tool=False)
+        return forest.map_view.map_view(loader, color_mapper, use_hover_tool=False)
 
 
 class Database:

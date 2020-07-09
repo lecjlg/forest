@@ -23,11 +23,69 @@ applications.
 import os
 import string
 import yaml
+import forest.drivers
+import forest.state
+from dataclasses import dataclass, field
 from collections import defaultdict
+from collections.abc import Mapping
 from forest.export import export
 
 
 __all__ = []
+
+
+@dataclass
+class Figures:
+    ui: bool = True
+    maximum: int = 3
+
+
+@dataclass
+class Defaults:
+    figures: Figures = field(default_factory=Figures)
+    timeui: bool = True
+    presetui: bool = True
+    viewport: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        self._assign("figures", Figures)
+
+    def _assign(self, att_name, cls):
+        if isinstance(getattr(self, att_name), dict):
+            obj = cls(**getattr(self, att_name))
+            setattr(self, att_name, obj)
+
+    @classmethod
+    def from_dict(cls, values):
+        return cls(**values)
+
+
+@dataclass
+class PluginSpec:
+    """Data representation of plugin"""
+    entry_point: str
+
+
+class Plugins(Mapping):
+    """Specialist mapping between allowed keys and specs"""
+    def __init__(self, data):
+        allowed = ("feature",)
+        self.data = {}
+        for key, value in data.items():
+            if key in allowed:
+                self.data[key] = PluginSpec(**value)
+            else:
+                msg = f"{key} not in {allowed}"
+                raise Exception(msg)
+
+    def __getitem__(self, *args, **kwargs):
+        return self.data.__getitem__(*args, **kwargs)
+
+    def __len__(self, *args, **kwargs):
+        return self.data.__len__(*args, **kwargs)
+
+    def __iter__(self, *args, **kwargs):
+        return self.data.__iter__(*args, **kwargs)
 
 
 class Viewport:
@@ -68,6 +126,8 @@ class Config(object):
     """
     def __init__(self, data):
         self.data = data
+        self.plugins = Plugins(self.data.get("plugins", {}))
+        self.state = forest.state.State.from_dict(self.data.get("state", {}))
 
     def __repr__(self):
         return "{}({})".format(
@@ -77,7 +137,7 @@ class Config(object):
     @property
     def features(self):
         """Dict of user-defined feature toggles"""
-        d = defaultdict(lambda: True)
+        d = defaultdict(lambda: False)
         d.update(self.data.get("features", {}))
         return d
 
@@ -93,6 +153,10 @@ class Config(object):
                   connection is not available
         """
         return self.data.get("use_web_map_tiles", True)
+
+    @property
+    def defaults(self):
+        return Defaults.from_dict(self.data.get("defaults", {}))
 
     @property
     def default_viewport(self):
@@ -183,6 +247,18 @@ class Config(object):
     def file_groups(self):
         return [FileGroup(**data)
                 for data in self.data["files"]]
+
+    @property
+    def datasets(self):
+        for group in self.file_groups:
+            settings = {
+                "label": group.label,
+                "pattern": group.pattern,
+                "locator": group.locator,
+                "database_path": group.database_path,
+                "directory": group.directory
+            }
+            yield forest.drivers.get_dataset(group.file_type, settings)
 
 
 class FileGroup(object):
