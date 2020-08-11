@@ -199,6 +199,12 @@ root .bk-toolbar,.bk-root .bk-toolbar *{box-sizing:border-box;margin:0;padding:0
   src: url('WeatherFront.woff') format('woff');
 }
 
+/* BARC Font */
+@font-face {
+  font-family: BARC;
+  src: url('BARC.woff') format('woff');
+}
+
 svg textPath, svg text {
     font-family: 'WeatherFront', serif !important;
     font-size: 14em !important;

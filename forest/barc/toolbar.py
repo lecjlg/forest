@@ -66,7 +66,7 @@ class BARC:
         '''glyph = bokeh.models.Text(
                 x="xs", 
                 y="ys", 
-                text=value("🌧"),  
+                text=value("9"),  
                 text_color="colour",
                 text_font_size="fontsize")'''
         #glyph.text_font_size = '%spx' % starting_font_size
@@ -78,7 +78,8 @@ class BARC:
                 x="xs", 
                 y="ys", 
                 source=self.source_text_stamp,
-                text=value("🌧"),  
+                text=value("9"),  
+                text_font='BARC',
                 text_color="colour",
                 text_font_size="fontsize"
                 )
