@@ -30,7 +30,7 @@ var frontClass = {
 function get_figures() {
     // saves the figure locations in global set_variables
     document.canvases = [
-        ...document.querySelectorAll('#figures div[class="forestfig"] canvas')
+        ...document.querySelectorAll('#figures div.forestfig canvas')
     ];
 
     // hide irrelevant menus
