@@ -174,16 +174,16 @@ class BARC:
 
 
     def ToolBar(self):
-        toolBarBoxes = []
+        toolBarList = []
         for i, figure in enumerate(self.figures):
             ### label toolbars
-            toolBarBoxes.append(
+            '''toolBarBoxes.append(
                 Paragraph(
                 text="""Toolbar: Figure %d"""%(i+1),
                 width=200, height=18,
                 css_classes=['barc_p','barc_g%d'%i],
                 )
-            )
+            )'''
 
             figure.add_tools(
                 bokeh.models.tools.PanTool(tags=['barcpan']),
@@ -195,16 +195,18 @@ class BARC:
             
             figure.add_tools(*self.weatherFront(figure,i))
 
-            toolBarBoxes.append(
+            toolBarList.append(
                  ToolbarBox(
                      toolbar = figure.toolbar,
-                     toolbar_location = "below",
+                     toolbar_location = None, visible = False,
                      css_classes=['barc_g%d'%i]
                  )
             )
-        self.barcTools.children.extend( toolBarBoxes )
+        #self.barcTools.children.extend( toolBarBoxes )
         #tools = sum([ toolbar.tools for toolbar in toolbars ], [])
         #tools.append(self.polyLine())
+
+        toolBarBoxes = bokeh.models.layouts.Column(children=toolBarList)
 
         buttonspec = {
                 'freehand': "🖉",
@@ -225,13 +227,14 @@ class BARC:
                 aspect_ratio =1,
                 margin = (0,0,0,0)
             )
-            button.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(buttons=list(self.barcTools.select({'tags': ['barc'+each]}))), code="""
+            button.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(buttons=list(toolBarBoxes.select({'tags': ['barc'+each]}))), code="""
                 var each;
                 for(each of buttons) { each.active = true; } 
             """))
             buttons.append(button)
 
         self.barcTools.children.append( bokeh.models.layouts.Row(children=buttons))
+        self.barcTools.children.append(toolBarBoxes)
 
 
         return self.barcTools
