@@ -18,10 +18,10 @@ get_figures();
 
 
 var frontClass = {
-    warm: "WW",
-    cold: "CC",
-    occluded: "WC",
-    stationary: "Wc"  // need to add another letter to the font to match 
+    warm: "\u{0f0187}\u{0f0187}",
+    cold: "\u{0f0186}\u{0f0186}",
+    occluded: "\u{0f0187}\u{0f0186}",
+    stationary: "\u{0f0187}\u{0f0188}"  // need to add another letter to the font to match 
     
 };
 

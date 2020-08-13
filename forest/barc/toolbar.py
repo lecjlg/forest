@@ -216,7 +216,10 @@ class BARC:
                 'boxzoom': "🔍",
                 'wheelzoom': "📜",
                 'reset': "🗘",
-                'warmfront': "⯊"
+                'coldfront': chr(0x0f0186)*2,
+                'warmfront': chr(0x0f0187)*2,
+                'occludedfront': chr(0x0f0186)+chr(0x0f0187),
+                'stationaryfront': chr(0x0f0187)+chr(0x0f0188),
                 }
         buttons = []
 
