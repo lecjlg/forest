@@ -289,7 +289,7 @@ svg textPath, svg text {
   }
 
 .barc-button {
-    font-family: 'BARC', sans-serif !important;
+    font-family: 'BARC', 'Open Sans', Helvetica, "Nimbus Sans", Ariel, sans-serif !important;
   }
 
 svg path {
