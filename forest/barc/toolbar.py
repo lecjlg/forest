@@ -1,4 +1,7 @@
 import bokeh.models
+
+import time
+
 from bokeh.models import ColumnDataSource, Paragraph
 from bokeh.models.glyphs import Text
 from bokeh.core.properties import value
@@ -18,6 +21,8 @@ class BARC:
         self.source_barb = ColumnDataSource(data.EMPTY)
 
         self.source_text_stamp = {}
+        self.starting_colour = "black" #in CSS-type spec 
+        self.colourPicker = bokeh.models.widgets.ColorPicker(name="barc_colours", color=self.starting_colour)
 
         self.glyphs = [
             *range(0x0f0000, 0x0f000a),
@@ -44,7 +49,8 @@ class BARC:
                 self.source_text_stamp[chr(glyph)].add([],"datasize")
                 self.source_text_stamp[chr(glyph)].add([],"fontsize")
                 self.source_text_stamp[chr(glyph)].add([],"colour")
-                barc_tools.append(self.textStamp(chr(glyph)));
+                glyphtool = self.textStamp(chr(glyph))
+                barc_tools.append(glyphtool)
             #self.figure.tools = barc_tools
             figure.add_tools(*barc_tools)
 
@@ -76,9 +82,16 @@ class BARC:
         return tool2
 
     def textStamp(self, glyph = chr(0x0f0000)):
+        '''Creates a tool that allows arbitrary Unicode text to be "stamped" on the map. Echos to all figures.
+
+        Params:
+            glyph: Arbitrary unicode string, usually a single character.
+
+        returns: 
+            PointDrawTool with textStamp functionality.
+        '''
         #render_text_stamp = self.figure.circle(x="xs",y="ys",legend_label="X", source=source);
         starting_font_size = 30 #in pixels 
-        starting_colour = "black" #in CSS-type spec 
 
         #render_text_stamp = self.figure.add_glyph(self.source_text_stamp, glyph)
         render_lines = []
@@ -95,12 +108,12 @@ class BARC:
                 )
                 
         self.source_text_stamp[glyph].js_on_change('data', 
-            bokeh.models.CustomJS(args=dict(datasource = self.source_text_stamp[glyph], starting_font_size=starting_font_size, figure=self.figures[0], starting_colour=starting_colour), code="""
+            bokeh.models.CustomJS(args=dict(datasource = self.source_text_stamp[glyph], starting_font_size=starting_font_size, figure=self.figures[0], colourPicker=self.colourPicker), code="""
                 for(var g = 0; g < datasource.data['fontsize'].length; g++)
                 {
                     if(!datasource.data['colour'][g])
                     {
-                        datasource.data['colour'][g] = starting_colour;
+                        datasource.data['colour'][g] = colourPicker.color;
                     }
 
                     if(!datasource.data['fontsize'][g])
@@ -201,8 +214,10 @@ class BARC:
                 bokeh.models.tools.BoxZoomTool(tags=['barcboxzoom']),
                 )
 
-            
+           
+            q = time.monotonic() 
             figure.add_tools(*self.weatherFront(figure,i))
+            print(time.monotonic() -q, "s")
 
             toolBarList.append(
                  ToolbarBox(
@@ -216,6 +231,7 @@ class BARC:
         #tools.append(self.polyLine())
 
         toolBarBoxes = bokeh.models.layouts.Column(children=toolBarList)
+        
 
         buttonspec = {
                 'freehand': "🖉",
@@ -249,6 +265,7 @@ class BARC:
             buttons.append(button)
 
         self.barcTools.children.append( bokeh.layouts.grid(buttons, ncols=9))
+        self.barcTools.children.append(self.colourPicker)
         self.barcTools.children.append(toolBarBoxes)
 
 
