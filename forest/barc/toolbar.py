@@ -18,8 +18,6 @@ class BARC:
         self.document = bokeh.plotting.curdoc()
         self.barcTools = bokeh.models.layouts.Column(name="barcTools")
         self.source_polyline = ColumnDataSource(data.EMPTY)
-        self.source_polyline.add([],"colour")
-        self.source_polyline.add([],"width")
         self.source_barb = ColumnDataSource(data.EMPTY)
 
         self.source_text_stamp = {}
@@ -62,6 +60,8 @@ class BARC:
     def polyLine(self):
         ''' Freehand Tool '''
         render_lines = []
+        self.source_polyline.add([],"colour")
+        self.source_polyline.add([],"width")
         for figure in self.figures:
             render_lines.append(  figure.multi_line(
                 xs="xs",
@@ -69,7 +69,7 @@ class BARC:
                 line_width="width",
                 source=self.source_polyline,
                 alpha=0.3,
-                color="red", level="overlay")
+                color="colour", level="overlay")
                 )
         #text = Text(x="xs", y="ys", text=value("abc"), text_color="red", text_font_size="12pt")
         #render_line1 = figure.add_glyph(self.source_polyline,text)
