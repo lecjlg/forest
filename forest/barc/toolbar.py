@@ -106,7 +106,7 @@ class BARC:
             PointDrawTool with textStamp functionality.
         '''
         #render_text_stamp = self.figure.circle(x="xs",y="ys",legend_label="X", source=source);
-        starting_font_size = 30 #in pixels 
+        starting_font_size = 15 #in pixels 
 
         #render_text_stamp = self.figure.add_glyph(self.source_text_stamp, glyph)
         render_lines = []
@@ -123,7 +123,7 @@ class BARC:
                 )
                 
         self.source_text_stamp[glyph].js_on_change('data', 
-            bokeh.models.CustomJS(args=dict(datasource = self.source_text_stamp[glyph], starting_font_size=starting_font_size, figure=self.figures[0], colourPicker=self.colourPicker), code="""
+            bokeh.models.CustomJS(args=dict(datasource = self.source_text_stamp[glyph], starting_font_size=starting_font_size, figure=self.figures[0], colourPicker=self.colourPicker, widthPicker=self.widthPicker), code="""
                 for(var g = 0; g < datasource.data['fontsize'].length; g++)
                 {
                     if(!datasource.data['colour'][g])
@@ -133,13 +133,13 @@ class BARC:
 
                     if(!datasource.data['fontsize'][g])
                     {
-                        datasource.data['fontsize'][g] = starting_font_size +'px';
+                        datasource.data['fontsize'][g] = (widthPicker.value * starting_font_size) +'px';
                     }
 
                     //calculate initial datasize
                     if(!datasource.data['datasize'][g])
                     {
-                        var starting_font_proportion = starting_font_size/(figure.inner_height);
+                        var starting_font_proportion = (widthPicker.value * starting_font_size)/(figure.inner_height);
                         datasource.data['datasize'][g] = (starting_font_proportion * (figure.y_range.end - figure.y_range.start));
                     }
                 }
