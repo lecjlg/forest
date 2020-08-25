@@ -18,10 +18,14 @@ class BARC:
         self.document = bokeh.plotting.curdoc()
         self.barcTools = bokeh.models.layouts.Column(name="barcTools")
         self.source_polyline = ColumnDataSource(data.EMPTY)
+        self.source_polyline.add([],"colour")
+        self.source_polyline.add([],"width")
         self.source_barb = ColumnDataSource(data.EMPTY)
 
         self.source_text_stamp = {}
         self.starting_colour = "black" #in CSS-type spec 
+        self.starting_width = 2
+        self.widthPicker = bokeh.models.widgets.Slider(name="barc_width", end=10.0, start=1.0, value=self.starting_width) 
         self.colourPicker = bokeh.models.widgets.ColorPicker(name="barc_colours", color=self.starting_colour)
 
         self.glyphs = [
@@ -62,6 +66,7 @@ class BARC:
             render_lines.append(  figure.multi_line(
                 xs="xs",
                 ys="ys",
+                line_width="width",
                 source=self.source_polyline,
                 alpha=0.3,
                 color="red", level="overlay")
@@ -74,8 +79,18 @@ class BARC:
                     name="barcfreehand"
                     )
         self.source_polyline.js_on_change('data', 
-            bokeh.models.CustomJS(args=dict(), code="""
-            console.log();
+            bokeh.models.CustomJS(args=dict(datasource=self.source_polyline, colourPicker=self.colourPicker, widthPicker=self.widthPicker), code="""
+                for(var g = 0; g < datasource.data['colour'].length; g++)
+                {
+                    if(!datasource.data['colour'][g])
+                    {
+                        datasource.data['colour'][g] = colourPicker.color;
+                    }
+                    if(!datasource.data['width'][g])
+                    {
+                        datasource.data['width'][g] = widthPicker.value;
+                    }
+                }
                 """)
             )
             
@@ -265,7 +280,7 @@ class BARC:
             buttons.append(button)
 
         self.barcTools.children.append( bokeh.layouts.grid(buttons, ncols=9))
-        self.barcTools.children.append(self.colourPicker)
+        self.barcTools.children.extend([self.colourPicker, self.widthPicker])
         self.barcTools.children.append(toolBarBoxes)
 
 
