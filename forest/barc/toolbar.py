@@ -11,7 +11,11 @@ from forest import wind, data
 from . import front
 
 class BARC:
-    ''' A class for the BARC features - more documentation needed. ''' 
+    '''
+     A class for the BARC features. 
+
+     It is attached to to the main FOREST instance in the `main` function of `forest/main.py`.
+    ''' 
     barcTools = None
     def __init__(self, figures):
         self.figures = figures
@@ -25,6 +29,13 @@ class BARC:
         self.starting_width = 2
         self.widthPicker = bokeh.models.widgets.Slider(name="barc_width", end=10.0, start=1.0, value=self.starting_width) 
         self.colourPicker = bokeh.models.widgets.ColorPicker(name="barc_colours", color=self.starting_colour)
+
+        self.saveArea = bokeh.models.widgets.inputs.TextAreaInput(cols=20, max_length=20000)
+        self.saveArea.js_on_change('value',
+            bokeh.models.CustomJS(args=dict(source_polyline=self.source_polyline, saveArea=self.saveArea), code="""
+                source_polyline.data = JSON.parse(saveArea.value)
+            """)
+        )
 
         self.glyphs = [
             *range(0x0f0000, 0x0f000a),
@@ -58,7 +69,11 @@ class BARC:
 
 
     def polyLine(self):
-        ''' Freehand Tool '''
+        ''' 
+            Creates a freehand tool for drawing on the Forest maps.
+
+            :returns: a FreehandDrawTool instance 
+        '''
         render_lines = []
         self.source_polyline.add([],"colour")
         self.source_polyline.add([],"width")
@@ -79,7 +94,7 @@ class BARC:
                     name="barcfreehand"
                     )
         self.source_polyline.js_on_change('data', 
-            bokeh.models.CustomJS(args=dict(datasource=self.source_polyline, colourPicker=self.colourPicker, widthPicker=self.widthPicker), code="""
+            bokeh.models.CustomJS(args=dict(datasource=self.source_polyline, colourPicker=self.colourPicker, widthPicker=self.widthPicker, saveArea=self.saveArea), code="""
                 for(var g = 0; g < datasource.data['colour'].length; g++)
                 {
                     if(!datasource.data['colour'][g])
@@ -91,6 +106,7 @@ class BARC:
                         datasource.data['width'][g] = widthPicker.value;
                     }
                 }
+                saveArea.value = JSON.stringify(datasource.data);
                 """)
             )
             
@@ -99,8 +115,7 @@ class BARC:
     def textStamp(self, glyph = chr(0x0f0000)):
         '''Creates a tool that allows arbitrary Unicode text to be "stamped" on the map. Echos to all figures.
 
-        Params:
-            glyph: Arbitrary unicode string, usually a single character.
+        :param glyph: Arbitrary unicode string, usually (but not required to be) a single character.
 
         returns: 
             PointDrawTool with textStamp functionality.
@@ -163,6 +178,10 @@ class BARC:
         return tool3
 
     def windBarb(self):
+        '''
+            Draws a windbarb based on u and v values in ms¯¹. Currently fixed to 50ms¯¹.
+
+        '''
         render_lines = []
         for figure in self.figures:
             render_lines.append( figure.barb(
@@ -280,7 +299,7 @@ class BARC:
             buttons.append(button)
 
         self.barcTools.children.append( bokeh.layouts.grid(buttons, ncols=9))
-        self.barcTools.children.extend([self.colourPicker, self.widthPicker])
+        self.barcTools.children.extend([self.colourPicker, self.widthPicker, self.saveArea])
         self.barcTools.children.append(toolBarBoxes)
 
 
