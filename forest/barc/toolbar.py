@@ -34,9 +34,17 @@ class BARC:
 
         self.saveArea = bokeh.models.widgets.inputs.TextAreaInput(cols=20, max_length=20000)
         self.saveArea.js_on_change('value',
-            bokeh.models.CustomJS(args=dict(sources=self.source, saveArea=self.saveArea), code="""
+            bokeh.models.CustomJS(args=dict(sources=self.source, saveArea=self.saveArea, figure=self.figures[0]), code="""
                 Object.entries(JSON.parse(saveArea.value)).forEach(([k,v]) => {
                     sources[k].data = v;
+                    sources[k].change.emit();
+                    if(k.substring(0,10) == 'text_stamp')
+                    {
+                        for(var g = 0; g < sources[k].data['fontsize'].length; g++)
+                        {
+                            sources[k].data['fontsize'][g] = (((sources[k].data['datasize'][g])/ (figure.y_range.end - figure.y_range.start))*figure.inner_height) + 'px';
+                        }
+                    }
                 })
             """)
         )
@@ -180,13 +188,12 @@ class BARC:
                 """)
         )
         figure.y_range.js_on_change('start',
-            bokeh.models.CustomJS(args=dict(render_text_stamp=render_lines[0], glyph=render_lines[0].glyph, figure=self.figures[0], starting_font_size=starting_font_size),code="""
-
+            bokeh.models.CustomJS(args=dict(render_text_stamp=render_lines[0], figure=self.figures[0]),code="""
             for(var g = 0; g < render_text_stamp.data_source.data['fontsize'].length; g++)
             {
                  render_text_stamp.data_source.data['fontsize'][g] = (((render_text_stamp.data_source.data['datasize'][g])/ (figure.y_range.end - figure.y_range.start))*figure.inner_height) + 'px';
             }
-            glyph.change.emit();
+            render_text_stamp.glyph.change.emit();
             """)
         )
         #render_text_stamp = bokeh.models.renderers.GlyphRenderer(data_source=ColumnDataSource(dict(x=x, y=y, text="X")), glyph=bokeh.models.Text(x="xs", y="ys", text="text", angle=0.3, text_color="fuchsia"))
