@@ -17,39 +17,63 @@ class BARC:
      It is attached to to the main FOREST instance in the `main` function of `forest/main.py`.
     ''' 
     barcTools = None
+    source = {}
     def __init__(self, figures):
         self.figures = figures
         self.document = bokeh.plotting.curdoc()
         self.barcTools = bokeh.models.layouts.Column(name="barcTools")
-        self.source_polyline = ColumnDataSource(data.EMPTY)
-        self.source_barb = ColumnDataSource(data.EMPTY)
+        self.source['polyline'] = ColumnDataSource(data.EMPTY)
+        self.source['barb'] = ColumnDataSource(data.EMPTY)
 
-        self.source_text_stamp = {}
+        #self.source['text_stamp'] = {}
         self.starting_colour = "black" #in CSS-type spec 
         self.starting_width = 2
         self.widthPicker = bokeh.models.widgets.Slider(name="barc_width", end=10.0, start=1.0, value=self.starting_width) 
         self.colourPicker = bokeh.models.widgets.ColorPicker(name="barc_colours", color=self.starting_colour)
 
+
         self.saveArea = bokeh.models.widgets.inputs.TextAreaInput(cols=20, max_length=20000)
         self.saveArea.js_on_change('value',
-            bokeh.models.CustomJS(args=dict(source_polyline=self.source_polyline, saveArea=self.saveArea), code="""
-                source_polyline.data = JSON.parse(saveArea.value)
+            bokeh.models.CustomJS(args=dict(sources=self.source, saveArea=self.saveArea), code="""
+                Object.entries(JSON.parse(saveArea.value)).forEach(([k,v]) => {
+                    sources[k].data = v;
+                })
             """)
         )
 
+        self.saveButton = bokeh.models.widgets.Button(name="barc_save", label="Save")
+        self.saveButton.js_on_click(
+            bokeh.models.CustomJS(args=dict(sources=self.source, saveArea=self.saveArea), code="""
+                var outdict = {}
+                Object.entries(sources).forEach(([k,v]) => 
+                {
+                    outdict[k] = v.data;
+                })
+                saveArea.value = JSON.stringify(outdict);
+            """)
+        )
+            
+
         self.glyphs = [
             *range(0x0f0000, 0x0f000a),
-            *range(0x0f0027,0x0f0031),
-            *range(0x0f004e,0x0f0059), 
-            *range(0x0f0075,0x0f007f), 
-            *range(0x0f009c,0x0f00a6), 
-            *range(0x0f00c3,0x0f00cd), 
-            *range(0x0f00ea,0x0f00f4), 
-            *range(0x0f0111,0x0f011b), 
-            *range(0x0f0138,0x0f0142), 
-            *range(0x0f015f,0x0f0169), 
+            #*range(0x0f0027,0x0f0031),
+            #*range(0x0f004e,0x0f0059), 
+            #*range(0x0f0075,0x0f007f), 
+            #*range(0x0f009c,0x0f00a6), 
+            #*range(0x0f00c3,0x0f00cd), 
+            #*range(0x0f00ea,0x0f00f4), 
+            #*range(0x0f0111,0x0f011b), 
+            #*range(0x0f0138,0x0f0142), 
+            #*range(0x0f015f,0x0f0169), 
         ] # being the list of unicode character codes for the weather symbols in BARC.woff
-    
+
+        #Make one ColumnDataSource per glyph    
+        for glyph in self.glyphs:
+            self.source['text_stamp'+chr(glyph)] = ColumnDataSource(data.EMPTY)
+            self.source['text_stamp'+chr(glyph)].add([],"datasize")
+            self.source['text_stamp'+chr(glyph)].add([],"fontsize")
+            self.source['text_stamp'+chr(glyph)].add([],"colour")
+
         ''' For each figure supplied (if multiple) ''' 
         for figure in self.figures:
             figure.toolbar.tools = []
@@ -58,10 +82,6 @@ class BARC:
                 self.windBarb()
                 ]
             for glyph in self.glyphs:
-                self.source_text_stamp[chr(glyph)] = ColumnDataSource(data.EMPTY)
-                self.source_text_stamp[chr(glyph)].add([],"datasize")
-                self.source_text_stamp[chr(glyph)].add([],"fontsize")
-                self.source_text_stamp[chr(glyph)].add([],"colour")
                 glyphtool = self.textStamp(chr(glyph))
                 barc_tools.append(glyphtool)
             #self.figure.tools = barc_tools
@@ -75,26 +95,26 @@ class BARC:
             :returns: a FreehandDrawTool instance 
         '''
         render_lines = []
-        self.source_polyline.add([],"colour")
-        self.source_polyline.add([],"width")
+        self.source['polyline'].add([],"colour")
+        self.source['polyline'].add([],"width")
         for figure in self.figures:
             render_lines.append(  figure.multi_line(
                 xs="xs",
                 ys="ys",
                 line_width="width",
-                source=self.source_polyline,
+                source=self.source['polyline'],
                 alpha=0.3,
                 color="colour", level="overlay")
                 )
         #text = Text(x="xs", y="ys", text=value("abc"), text_color="red", text_font_size="12pt")
-        #render_line1 = figure.add_glyph(self.source_polyline,text)
+        #render_line1 = figure.add_glyph(self.source['polyline'],text)
         tool2 = FreehandDrawTool(
                     renderers=[render_lines[0]], 
                     tags=['barcfreehand'],
                     name="barcfreehand"
                     )
-        self.source_polyline.js_on_change('data', 
-            bokeh.models.CustomJS(args=dict(datasource=self.source_polyline, colourPicker=self.colourPicker, widthPicker=self.widthPicker, saveArea=self.saveArea), code="""
+        self.source['polyline'].js_on_change('data', 
+            bokeh.models.CustomJS(args=dict(datasource=self.source['polyline'], colourPicker=self.colourPicker, widthPicker=self.widthPicker, saveArea=self.saveArea, sources=self.source), code="""
                 for(var g = 0; g < datasource.data['colour'].length; g++)
                 {
                     if(!datasource.data['colour'][g])
@@ -106,7 +126,6 @@ class BARC:
                         datasource.data['width'][g] = widthPicker.value;
                     }
                 }
-                saveArea.value = JSON.stringify(datasource.data);
                 """)
             )
             
@@ -123,13 +142,13 @@ class BARC:
         #render_text_stamp = self.figure.circle(x="xs",y="ys",legend_label="X", source=source);
         starting_font_size = 15 #in pixels 
 
-        #render_text_stamp = self.figure.add_glyph(self.source_text_stamp, glyph)
+        #render_text_stamp = self.figure.add_glyph(self.source['text_stamp'], glyph)
         render_lines = []
         for figure in self.figures:
             render_lines.append(figure.text_stamp(
                 x="xs", 
                 y="ys", 
-                source=self.source_text_stamp[glyph],
+                source=self.source['text_stamp'+glyph],
                 text=value(glyph),  
                 text_font='BARC',
                 text_color="colour",
@@ -137,9 +156,9 @@ class BARC:
                 )
                 )
                 
-        self.source_text_stamp[glyph].js_on_change('data', 
-            bokeh.models.CustomJS(args=dict(datasource = self.source_text_stamp[glyph], starting_font_size=starting_font_size, figure=self.figures[0], colourPicker=self.colourPicker, widthPicker=self.widthPicker), code="""
-                for(var g = 0; g < datasource.data['fontsize'].length; g++)
+        self.source['text_stamp'+glyph].js_on_change('data', 
+            bokeh.models.CustomJS(args=dict(datasource = self.source['text_stamp'+glyph], starting_font_size=starting_font_size, figure=self.figures[0], colourPicker=self.colourPicker, widthPicker=self.widthPicker, saveArea=self.saveArea), code="""
+                for(var g = 0; g < datasource.data['xs'].length; g++)
                 {
                     if(!datasource.data['colour'][g])
                     {
@@ -172,7 +191,7 @@ class BARC:
         )
         #render_text_stamp = bokeh.models.renderers.GlyphRenderer(data_source=ColumnDataSource(dict(x=x, y=y, text="X")), glyph=bokeh.models.Text(x="xs", y="ys", text="text", angle=0.3, text_color="fuchsia"))
         tool3 = PointDrawTool(
-                    renderers=render_lines,
+                    renderers=[render_lines[0]],
                     tags= ['barc'+glyph],
                     )
         return tool3
@@ -189,7 +208,7 @@ class BARC:
                 y="ys", 
                 u=-50,
                 v=-50,
-                source=self.source_barb
+                source=self.source['barb']
                 ))
 
         tool4 = PointDrawTool(
@@ -299,7 +318,7 @@ class BARC:
             buttons.append(button)
 
         self.barcTools.children.append( bokeh.layouts.grid(buttons, ncols=9))
-        self.barcTools.children.extend([self.colourPicker, self.widthPicker, self.saveArea])
+        self.barcTools.children.extend([self.colourPicker, self.widthPicker, self.saveButton, self.saveArea])
         self.barcTools.children.append(toolBarBoxes)
 
 
