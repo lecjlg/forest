@@ -2,7 +2,7 @@ import bokeh.models
 
 import time
 
-from bokeh.models import ColumnDataSource, Paragraph
+from bokeh.models import ColumnDataSource, Paragraph, Select
 from bokeh.models.glyphs import Text
 from bokeh.core.properties import value
 from bokeh.models.tools import PolyDrawTool, PointDrawTool, ToolbarBox,FreehandDrawTool, ProxyToolbar, Toolbar
@@ -12,10 +12,10 @@ from . import front
 
 class BARC:
     '''
-     A class for the BARC features. 
+     A class for the BARC features.
 
      It is attached to to the main FOREST instance in the `main` function of `forest/main.py`.
-    ''' 
+    '''
     barcTools = None
     source = {}
     def __init__(self, figures):
@@ -26,12 +26,13 @@ class BARC:
         self.source['barb'] = ColumnDataSource(data.EMPTY)
 
         #self.source['text_stamp'] = {}
-        self.starting_colour = "black" #in CSS-type spec 
+        self.starting_colour = "black" #in CSS-type spec
         self.starting_width = 2
-        self.widthPicker = bokeh.models.widgets.Slider(name="barc_width", end=10.0, start=1.0, value=self.starting_width) 
+        self.widthPicker = bokeh.models.widgets.Slider(name="barc_width", end=10.0, start=1.0, value=self.starting_width)
+        # colour bar picker
         self.colourPicker = bokeh.models.widgets.ColorPicker(name="barc_colours", color=self.starting_colour)
 
-
+        # Save area
         self.saveArea = bokeh.models.widgets.inputs.TextAreaInput(cols=20, max_length=20000)
         self.saveArea.js_on_change('value',
             bokeh.models.CustomJS(args=dict(sources=self.source, saveArea=self.saveArea, figure=self.figures[0]), code="""
@@ -53,36 +54,37 @@ class BARC:
         self.saveButton.js_on_click(
             bokeh.models.CustomJS(args=dict(sources=self.source, saveArea=self.saveArea), code="""
                 var outdict = {}
-                Object.entries(sources).forEach(([k,v]) => 
+                Object.entries(sources).forEach(([k,v]) =>
                 {
                     outdict[k] = v.data;
                 })
                 saveArea.value = JSON.stringify(outdict);
             """)
         )
-            
 
+        # Text stamps all ( commented out for neatness)
         self.glyphs = [
             *range(0x0f0000, 0x0f000a),
-            #*range(0x0f0027,0x0f0031),
-            #*range(0x0f004e,0x0f0059), 
-            #*range(0x0f0075,0x0f007f), 
-            #*range(0x0f009c,0x0f00a6), 
-            #*range(0x0f00c3,0x0f00cd), 
-            #*range(0x0f00ea,0x0f00f4), 
-            #*range(0x0f0111,0x0f011b), 
-            #*range(0x0f0138,0x0f0142), 
-            #*range(0x0f015f,0x0f0169), 
+            *range(0x0f0027,0x0f0031),
+            #*range(0x0f004e,0x0f0059),
+            #*range(0x0f0075,0x0f007f),
+            #*range(0x0f009c,0x0f00a6),
+            #*range(0x0f00c3,0x0f00cd),
+            #*range(0x0f00ea,0x0f00f4),
+            #*range(0x0f0111,0x0f011b),
+            #*range(0x0f0138,0x0f0142),
+            #*range(0x0f015f,0x0f0169),
         ] # being the list of unicode character codes for the weather symbols in BARC.woff
 
-        #Make one ColumnDataSource per glyph    
+        #Make one ColumnDataSource per glyph
         for glyph in self.glyphs:
             self.source['text_stamp'+chr(glyph)] = ColumnDataSource(data.EMPTY)
             self.source['text_stamp'+chr(glyph)].add([],"datasize")
             self.source['text_stamp'+chr(glyph)].add([],"fontsize")
             self.source['text_stamp'+chr(glyph)].add([],"colour")
 
-        ''' For each figure supplied (if multiple) ''' 
+
+        ''' For each figure supplied (if multiple) '''
         for figure in self.figures:
             figure.toolbar.tools = []
             barc_tools = [
@@ -95,13 +97,15 @@ class BARC:
             #self.figure.tools = barc_tools
             figure.add_tools(*barc_tools)
 
+        self.dropDown = Select(title="Select text Stamp", value='test1', options=['test1', 'test1'])
 
     def polyLine(self):
-        ''' 
+        '''
             Creates a freehand tool for drawing on the Forest maps.
 
-            :returns: a FreehandDrawTool instance 
+            :returns: a FreehandDrawTool instance
         '''
+        # colour picker means no longer have separate colour line options
         render_lines = []
         self.source['polyline'].add([],"colour")
         self.source['polyline'].add([],"width")
@@ -117,11 +121,11 @@ class BARC:
         #text = Text(x="xs", y="ys", text=value("abc"), text_color="red", text_font_size="12pt")
         #render_line1 = figure.add_glyph(self.source['polyline'],text)
         tool2 = FreehandDrawTool(
-                    renderers=[render_lines[0]], 
+                    renderers=[render_lines[0]],
                     tags=['barcfreehand'],
                     name="barcfreehand"
                     )
-        self.source['polyline'].js_on_change('data', 
+        self.source['polyline'].js_on_change('data',
             bokeh.models.CustomJS(args=dict(datasource=self.source['polyline'], colourPicker=self.colourPicker, widthPicker=self.widthPicker, saveArea=self.saveArea, sources=self.source), code="""
                 for(var g = 0; g < datasource.data['colour'].length; g++)
                 {
@@ -136,7 +140,7 @@ class BARC:
                 }
                 """)
             )
-            
+
         return tool2
 
     def textStamp(self, glyph = chr(0x0f0000)):
@@ -144,27 +148,27 @@ class BARC:
 
         :param glyph: Arbitrary unicode string, usually (but not required to be) a single character.
 
-        returns: 
+        returns:
             PointDrawTool with textStamp functionality.
         '''
         #render_text_stamp = self.figure.circle(x="xs",y="ys",legend_label="X", source=source);
-        starting_font_size = 15 #in pixels 
+        starting_font_size = 15 #in pixels
 
         #render_text_stamp = self.figure.add_glyph(self.source['text_stamp'], glyph)
         render_lines = []
         for figure in self.figures:
             render_lines.append(figure.text_stamp(
-                x="xs", 
-                y="ys", 
+                x="xs",
+                y="ys",
                 source=self.source['text_stamp'+glyph],
-                text=value(glyph),  
+                text=value(glyph),
                 text_font='BARC',
                 text_color="colour",
                 text_font_size="fontsize"
                 )
                 )
-                
-        self.source['text_stamp'+glyph].js_on_change('data', 
+
+        self.source['text_stamp'+glyph].js_on_change('data',
             bokeh.models.CustomJS(args=dict(datasource = self.source['text_stamp'+glyph], starting_font_size=starting_font_size, figure=self.figures[0], colourPicker=self.colourPicker, widthPicker=self.widthPicker, saveArea=self.saveArea), code="""
                 for(var g = 0; g < datasource.data['xs'].length; g++)
                 {
@@ -211,8 +215,8 @@ class BARC:
         render_lines = []
         for figure in self.figures:
             render_lines.append( figure.barb(
-                x="xs", 
-                y="ys", 
+                x="xs",
+                y="ys",
                 u=-50,
                 v=-50,
                 source=self.source['barb']
@@ -223,32 +227,32 @@ class BARC:
                     tags= ['barcwindbarb'],
                     custom_icon = wind.__file__.replace('__init__.py','barb.png')
                     )
-                    
+
         return tool4
 
 
     def weatherFront(self,figure,fid:int):
-        ''' 
+        '''
         The weatherfront function of barc
 
         Arguments:
-            Figure - bokeh figure 
+            Figure - bokeh figure
             fid (int) - figure index / order
-        
+
         Returns:
             List of custom toolbar elements
         '''
-        
+
         # function to update plot ranges in js
         figure.x_range.js_on_change('start', front.range_change(figure,fid))
-        
+
         # add draw items to toolbar
         toolbars = []
         for front_type in 'warm cold occluded stationary'.split():
             fronttool =  front.front(self,figure,front_type,fid)
             fronttool.tags = ['barc' + front_type +'front']
             toolbars.append( fronttool )
-        
+
         return toolbars #Toolbar(tools = toolbars)
 
 #####################################
@@ -274,8 +278,8 @@ class BARC:
                 bokeh.models.tools.BoxZoomTool(tags=['barcboxzoom']),
                 )
 
-           
-            q = time.monotonic() 
+
+            q = time.monotonic()
             figure.add_tools(*self.weatherFront(figure,i))
             print(time.monotonic() -q, "s")
 
@@ -291,7 +295,7 @@ class BARC:
         #tools.append(self.polyLine())
 
         toolBarBoxes = bokeh.models.layouts.Column(children=toolBarList)
-        
+
 
         buttonspec = {
                 'freehand': "🖉",
@@ -299,14 +303,14 @@ class BARC:
                 'pan': "✥",
                 'boxzoom': "🔍",
                 'wheelzoom': "📜",
-                'reset': "🗘",
+                'reset': "reset",
                 'coldfront': chr(0x0f0186)*2,
                 'warmfront': chr(0x0f0187)*2,
                 'occludedfront': chr(0x0f0186)+chr(0x0f0187),
                 'stationaryfront': chr(0x0f0187)+chr(0x0f0188),
                 }
-        for glyph in self.glyphs:
-            buttonspec[chr(glyph)] = chr(glyph)
+        #for glyph in self.glyphs:
+        #    buttonspec[chr(glyph)] = chr(glyph)
 
 
         buttons = []
@@ -320,12 +324,12 @@ class BARC:
             )
             button.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(buttons=list(toolBarBoxes.select({'tags': ['barc'+each]}))), code="""
                 var each;
-                for(each of buttons) { each.active = true; } 
+                for(each of buttons) { each.active = true; }
             """))
             buttons.append(button)
 
-        self.barcTools.children.append( bokeh.layouts.grid(buttons, ncols=9))
-        self.barcTools.children.extend([self.colourPicker, self.widthPicker, self.saveButton, self.saveArea])
+        self.barcTools.children.append( bokeh.layouts.grid(buttons, ncols=6))
+        self.barcTools.children.extend([self.dropDown, self.colourPicker, self.widthPicker, self.saveButton, self.saveArea])
         self.barcTools.children.append(toolBarBoxes)
 
 
