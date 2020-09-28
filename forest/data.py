@@ -30,6 +30,11 @@ DISPUTED = {
     "xs": [],
     "ys": []
 }
+EMPTY = {
+    "xs": [],
+    "ys": [],
+}
+
 AUTO_SHUTDOWN = False
 FEATURE_FLAGS = defaultdict(lambda: False)
 
