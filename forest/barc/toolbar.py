@@ -28,10 +28,14 @@ class BARC:
         #self.source['text_stamp'] = {}
         self.starting_colour = "black" #in CSS-type spec
         self.starting_width = 2
-        self.widthPicker = bokeh.models.widgets.Slider(name="barc_width", end=10.0, start=1.0, value=self.starting_width)
+        self.widthPicker = bokeh.models.widgets.Slider(title='Select width', name="barc_width",width=350, end=10.0, start=1.0, value=self.starting_width)
         # colour bar picker
-        self.colourPicker = bokeh.models.widgets.ColorPicker(name="barc_colours", color=self.starting_colour)
-
+        self.colourPicker = bokeh.models.widgets.ColorPicker(title='Select stamp colour:',width=350,name="barc_colours", color=self.starting_colour)
+        # Dropdown Menu of stamp categories
+        self.dropDown = Select(title="Stamp Category to display:",width=350,
+                                value="convection",
+                                options=["convection", "fog", "dust", "other"])
+        self.set_glyphs()
         # Save area
         self.saveArea = bokeh.models.widgets.inputs.TextAreaInput(cols=20, max_length=20000)
         self.saveArea.js_on_change('value',
@@ -50,7 +54,7 @@ class BARC:
             """)
         )
 
-        self.saveButton = bokeh.models.widgets.Button(name="barc_save", label="Save")
+        self.saveButton = bokeh.models.widgets.Button(name="barc_save",width=350, label="Save")
         self.saveButton.js_on_click(
             bokeh.models.CustomJS(args=dict(sources=self.source, saveArea=self.saveArea), code="""
                 var outdict = {}
@@ -62,20 +66,14 @@ class BARC:
             """)
         )
 
-        # Text stamps all ( commented out for neatness)
-        self.glyphs = [
-            *range(0x0f0000, 0x0f000a),
-            *range(0x0f0027,0x0f0031),
-            #*range(0x0f004e,0x0f0059),
-            #*range(0x0f0075,0x0f007f),
-            #*range(0x0f009c,0x0f00a6),
-            #*range(0x0f00c3,0x0f00cd),
-            #*range(0x0f00ea,0x0f00f4),
-            #*range(0x0f0111,0x0f011b),
-            #*range(0x0f0138,0x0f0142),
-            #*range(0x0f015f,0x0f0169),
-        ] # being the list of unicode character codes for the weather symbols in BARC.woff
-
+    def set_glyphs(self):
+        """Set Glyphs based on drop down selection
+        """
+        new= self.dropDown.value
+        if str(new)=="fog":
+            self.glyphs = [*range(0x0f0027,0x0f0031)]
+        elif str(new)=="convection":
+            self.glyphs = [*range(0x0f0000, 0x0f000a)]
         #Make one ColumnDataSource per glyph
         for glyph in self.glyphs:
             self.source['text_stamp'+chr(glyph)] = ColumnDataSource(data.EMPTY)
@@ -83,21 +81,12 @@ class BARC:
             self.source['text_stamp'+chr(glyph)].add([],"fontsize")
             self.source['text_stamp'+chr(glyph)].add([],"colour")
 
-
-        ''' For each figure supplied (if multiple) '''
-        for figure in self.figures:
-            figure.toolbar.tools = []
-            barc_tools = [
-                self.polyLine(),
-                self.windBarb()
-                ]
-            for glyph in self.glyphs:
-                glyphtool = self.textStamp(chr(glyph))
-                barc_tools.append(glyphtool)
-            #self.figure.tools = barc_tools
-            figure.add_tools(*barc_tools)
-
-        self.dropDown = Select(title="Select text Stamp", value='test1', options=['test1', 'test1'])
+    def call(self,attr,old,new):
+        """Call back
+        """
+        self.set_glyphs()
+        #print(self.dropDown.value)
+        #print(new)
 
     def polyLine(self):
         '''
@@ -255,6 +244,54 @@ class BARC:
 
         return toolbars #Toolbar(tools = toolbars)
 
+    def display_glyphs(self):
+        toolBarList = []
+        for i, figure in enumerate(self.figures):
+            ### label toolbars
+            '''toolBarBoxes.append(
+                Paragraph(
+                text="""Toolbar: Figure %d"""%(i+1),
+                width=200, height=18,
+                css_classes=['barc_p','barc_g%d'%i],
+                )
+            )'''
+        ''' For each figure supplied (if multiple) '''
+        self.dropDown.on_change("value", self.call)
+        for figure in self.figures:
+                barc_tools=[]
+                for glyph in self.glyphs:
+                    glyphtool = self.textStamp(chr(glyph))
+                    barc_tools.append(glyphtool)
+                figure.add_tools(*barc_tools)
+
+                toolBarList.append(
+                     ToolbarBox(
+                         toolbar = figure.toolbar,
+                         toolbar_location = None, visible = False,
+                         css_classes=['barc_g%d'%i]
+                     )
+                )
+
+        toolBarBoxes = bokeh.models.layouts.Column(children=toolBarList)
+        buttonspec = {}
+        for glyph in self.glyphs:
+                buttonspec[chr(glyph)] = chr(glyph)
+        buttons = []
+        for each in buttonspec:
+            button =bokeh.models.widgets.Button(
+                label=buttonspec[each],
+                css_classes = ['barc-'+each+'-button','barc-button'],
+                aspect_ratio =1,
+                margin = (0,0,0,0)
+            )
+
+            button.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(buttons=list(toolBarBoxes.select({'tags': ['barc'+each]}))), code="""
+                var each;
+                for(each of buttons) { each.active = true; }
+            """))
+            buttons.append(button)
+        return buttons
+
 #####################################
 #####################################
 
@@ -270,7 +307,9 @@ class BARC:
                 css_classes=['barc_p','barc_g%d'%i],
                 )
             )'''
-
+        ''' For each figure supplied (if multiple) '''
+        for figure in self.figures:
+            barc_tools=[]
             figure.add_tools(
                 bokeh.models.tools.PanTool(tags=['barcpan']),
                 bokeh.models.tools.WheelZoomTool(tags=['barcwheelzoom']),
@@ -291,12 +330,10 @@ class BARC:
                  )
             )
         #self.barcTools.children.extend( toolBarBoxes )
-        #tools = sum([ toolbar.tools for toolbar in toolbars ], [])
+        #tools = sum([ toolbar.tools for toolbar in toolbars ], [])self.dropDown.on_change("value", self.call)
         #tools.append(self.polyLine())
-
+        # standard buttons
         toolBarBoxes = bokeh.models.layouts.Column(children=toolBarList)
-
-
         buttonspec = {
                 'freehand': "🖉",
                 'windbarb': "🚩",
@@ -309,12 +346,7 @@ class BARC:
                 'occludedfront': chr(0x0f0186)+chr(0x0f0187),
                 'stationaryfront': chr(0x0f0187)+chr(0x0f0188),
                 }
-        #for glyph in self.glyphs:
-        #    buttonspec[chr(glyph)] = chr(glyph)
-
-
         buttons = []
-
         for each in buttonspec:
             button =bokeh.models.widgets.Button(
                 label=buttonspec[each],
@@ -322,6 +354,7 @@ class BARC:
                 aspect_ratio =1,
                 margin = (0,0,0,0)
             )
+
             button.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(buttons=list(toolBarBoxes.select({'tags': ['barc'+each]}))), code="""
                 var each;
                 for(each of buttons) { each.active = true; }
@@ -329,7 +362,9 @@ class BARC:
             buttons.append(button)
 
         self.barcTools.children.append( bokeh.layouts.grid(buttons, ncols=6))
-        self.barcTools.children.extend([self.dropDown, self.colourPicker, self.widthPicker, self.saveButton, self.saveArea])
+        self.barcTools.children.extend([self.dropDown])
+        self.barcTools.children.append( bokeh.layouts.grid(self.display_glyphs(), ncols=8))
+        self.barcTools.children.extend([self.colourPicker, self.widthPicker, self.saveButton, self.saveArea])
         self.barcTools.children.append(toolBarBoxes)
 
 
