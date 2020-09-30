@@ -46,8 +46,6 @@ export class FrontDrawToolView extends PolyToolView {
     const [x1key, y1key] = [glyph.x1.field, glyph.y1.field]
     const [cx0key, cy0key] = [glyph.cx0.field, glyph.cy0.field]
     const [cx1key, cy1key] = [glyph.cx1.field, glyph.cy1.field]
-    /*const bezX = [x1key,cx1key,cx0key]
-    const bezY = [y1key,cy1key,cy0key]*/
     if (mode == 'new') {
       this._pop_glyphs(cds, this.model.num_objects)
       if (xkey) cds.get_array(xkey).push([x, x])
@@ -60,7 +58,7 @@ export class FrontDrawToolView extends PolyToolView {
       if (cy0key) cds.get_array(cy0key).push([null, null])
       if (cx1key) cds.get_array(cx1key).push([null, null])
       if (cy1key) cds.get_array(cy1key).push([null, null])
-      this._pad_empty_columns(cds, [xkey, ykey, x1key, y1key, cx0key, cy0key, cx1key, cy1key])
+      this._pad_empty_columns(cds, [xkey, ykey, x0key, y0key, x1key, y1key, cx0key, cy0key, cx1key, cy1key])
     } else if (mode == 'edit') {
       if (xkey) {
         const xs = cds.data[xkey][cds.data[xkey].length-1]
@@ -73,53 +71,49 @@ export class FrontDrawToolView extends PolyToolView {
     } else if (mode == 'add') {
      if(glyph.x1.field) //if Bezier
      {
-      if (xkey) {
-        const xidx = cds.data[xkey].length-1
-        let xs = cds.get_array<number[]>(xkey)[xidx]
-        if((xs.length % 4) ==0)
+      const xidx = cds.data[xkey].length-1
+      let xs = cds.get_array<number[]>(xkey)[xidx]
+      const nx = xs[xs.length-1]
+      xs[xs.length-1] = x
+      if (!isArray(xs)) {
+        xs = Array.from(xs)
+        cds.data[xkey][xidx] = xs
+      }
+      xs.push(nx)
+      if (x0key) {
+        //once there are 4 points, and every three afterwards
+        if(((xs.length % 3) ==0 && xs.length > 3) || xs.length==4)
         {
             //push the first value to beziér origin (x0) and so on
-            cds.data[x0key][xidx] = xs[xs.length -4]
-            cds.data[cx0key][xidx] = xs[xs.length -3]
-            cds.data[cx1key][xidx] = xs[xs.length -2]
+            cds.data[x0key][xidx] = xs[xs.length -5]
+            cds.data[cx0key][xidx] = xs[xs.length -4]
+            cds.data[cx1key][xidx] = xs[xs.length -3]
             //push current x as x1
-            cds.data[x1key][xidx] = x
-            //keep array lengths consistent
-            //cds.data[xkey][xidx+1] = [null];
+            cds.data[x1key][xidx] = xs[xs.length -2]
         } 
-        const nx = xs[xs.length-1]
-        xs[xs.length-1] = x
-        if (!isArray(xs)) {
-          xs = Array.from(xs)
-          cds.data[xkey][xidx] = xs
-        }
-        xs.push(nx)
       }
-      if (ykey) {
-        const yidx = cds.data[ykey].length-1
-        let ys = cds.get_array<number[]>(ykey)[yidx]
-        if((ys.length % 4) ==0)
+      const yidx = cds.data[ykey].length-1
+      let ys = cds.get_array<number[]>(ykey)[yidx]
+      const ny = ys[ys.length-1]
+      ys[ys.length-1] = y
+      if (!isArray(ys)) {
+        ys = Array.from(ys)
+        cds.data[ykey][yidx] = ys
+      }
+      ys.push(ny) 
+      if (y0key) {
+        if(((ys.length % 3) ==0 && ys.length > 3) || ys.length==4)
         {
             //set the first value to beziér origin (y0) and so on
-            cds.data[y0key][yidx] = ys[ys.length -4]
-            cds.data[cy0key][yidx] = ys[ys.length -3]
-            cds.data[cy1key][yidx] = ys[ys.length -2]
+            cds.data[y0key][yidx] = ys[ys.length -5]
+            cds.data[cy0key][yidx] = ys[ys.length -4]
+            cds.data[cy1key][yidx] = ys[ys.length -3]
             //push current y as y1
-            cds.data[y1key][yidx] = y
-            //keep array lengths consistent
-            //cds.data[ykey][yidx+1] = [null];
-            //cds.data['angle'][yidx+1] = [null];
+            cds.data[y1key][yidx] = ys[ys.length -2]
 
             //push changes (only done on y-axis as there's no point doing it twice)
             cds.change.emit()
         } 
-        const ny = ys[ys.length-1]
-        ys[ys.length-1] = y
-        if (!isArray(ys)) {
-          ys = Array.from(ys)
-          cds.data[ykey][yidx] = ys
-        }
-        ys.push(ny) 
       }
      }
      else
