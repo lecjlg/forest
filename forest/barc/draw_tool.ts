@@ -52,6 +52,8 @@ export class FrontDrawToolView extends PolyToolView {
       this._pop_glyphs(cds, this.model.num_objects)
       if (xkey) cds.get_array(xkey).push([x, x])
       if (ykey) cds.get_array(ykey).push([y, y])
+      if (x0key) cds.get_array(x0key).push([null, null])
+      if (y0key) cds.get_array(y0key).push([null, null])
       if (x1key) cds.get_array(x1key).push([null, null])
       if (y1key) cds.get_array(y1key).push([null, null])
       if (cx0key) cds.get_array(cx0key).push([null, null])
@@ -77,14 +79,14 @@ export class FrontDrawToolView extends PolyToolView {
         if((xs.length % 4) ==0)
         {
             //push the first value to beziér origin (x0) and so on
-            cds.data[x0key][xidx+1] = xs[xs.length -4]
-            cds.data[cx0key][xidx+1] = xs[xs.length -3]
-            cds.data[cx1key][xidx+1] = xs[xs.length -2]
+            cds.data[x0key][xidx] = xs[xs.length -4]
+            cds.data[cx0key][xidx] = xs[xs.length -3]
+            cds.data[cx1key][xidx] = xs[xs.length -2]
             //push current x as x1
-            cds.data[x1key][xidx+1] = x
+            cds.data[x1key][xidx] = x
             //keep array lengths consistent
-            cds.data[xkey][xidx+1] = [null];
-        } else {
+            //cds.data[xkey][xidx+1] = [null];
+        } 
         const nx = xs[xs.length-1]
         xs[xs.length-1] = x
         if (!isArray(xs)) {
@@ -92,7 +94,6 @@ export class FrontDrawToolView extends PolyToolView {
           cds.data[xkey][xidx] = xs
         }
         xs.push(nx)
-        }
       }
       if (ykey) {
         const yidx = cds.data[ykey].length-1
@@ -100,18 +101,18 @@ export class FrontDrawToolView extends PolyToolView {
         if((ys.length % 4) ==0)
         {
             //set the first value to beziér origin (y0) and so on
-            cds.data[y0key][yidx+1] = ys[ys.length -4]
-            cds.data[cy0key][yidx+1] = ys[ys.length -3]
-            cds.data[cy1key][yidx+1] = ys[ys.length -2]
+            cds.data[y0key][yidx] = ys[ys.length -4]
+            cds.data[cy0key][yidx] = ys[ys.length -3]
+            cds.data[cy1key][yidx] = ys[ys.length -2]
             //push current y as y1
-            cds.data[y1key][yidx+1] = y
+            cds.data[y1key][yidx] = y
             //keep array lengths consistent
-            cds.data[ykey][yidx+1] = [null];
-            cds.data['angle'][yidx+1] = [null];
+            //cds.data[ykey][yidx+1] = [null];
+            //cds.data['angle'][yidx+1] = [null];
 
             //push changes (only done on y-axis as there's no point doing it twice)
             cds.change.emit()
-        } else {
+        } 
         const ny = ys[ys.length-1]
         ys[ys.length-1] = y
         if (!isArray(ys)) {
@@ -119,7 +120,6 @@ export class FrontDrawToolView extends PolyToolView {
           cds.data[ykey][yidx] = ys
         }
         ys.push(ny) 
-        }
       }
      }
      else
