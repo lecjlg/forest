@@ -7,7 +7,8 @@ from bokeh.models.glyphs import Text
 from bokeh.core.properties import value
 from bokeh.models.tools import PolyDrawTool, PointDrawTool, ToolbarBox,FreehandDrawTool, ProxyToolbar, Toolbar
 from bokeh.events import ButtonClick
-from forest import wind, data
+from forest import wind, data,tools, redux
+import forest.middlewares as mws
 from . import front
 
 class BARC:
@@ -35,6 +36,7 @@ class BARC:
         self.dropDown = Select(title="Stamp Category to display:",width=350,
                                 value="convection",
                                 options=["convection", "fog", "dust", "other"])
+        self.dropDown.on_change("value", self.call)
         self.set_glyphs()
         # Save area
         self.saveArea = bokeh.models.widgets.inputs.TextAreaInput(cols=20, max_length=20000)
@@ -69,7 +71,7 @@ class BARC:
     def set_glyphs(self):
         """Set Glyphs based on drop down selection
         """
-        new= self.dropDown.value
+        new=self.dropDown.value
         if str(new)=="fog":
             self.glyphs = [*range(0x0f0027,0x0f0031)]
         elif str(new)=="convection":
@@ -84,9 +86,11 @@ class BARC:
     def call(self,attr,old,new):
         """Call back
         """
+        print(new)
+        self.barcTools.children.remove(self.glyphrow)
         self.set_glyphs()
-        #print(self.dropDown.value)
-        #print(new)
+        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=8)
+        self.barcTools.children.insert(2,self.glyphrow)
 
     def polyLine(self):
         '''
@@ -256,7 +260,7 @@ class BARC:
                 )
             )'''
         ''' For each figure supplied (if multiple) '''
-        self.dropDown.on_change("value", self.call)
+
         for figure in self.figures:
                 barc_tools=[]
                 for glyph in self.glyphs:
@@ -363,9 +367,9 @@ class BARC:
 
         self.barcTools.children.append( bokeh.layouts.grid(buttons, ncols=6))
         self.barcTools.children.extend([self.dropDown])
-        self.barcTools.children.append( bokeh.layouts.grid(self.display_glyphs(), ncols=8))
+        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=8)
+        self.barcTools.children.append(self.glyphrow)
         self.barcTools.children.extend([self.colourPicker, self.widthPicker, self.saveButton, self.saveArea])
         self.barcTools.children.append(toolBarBoxes)
-
 
         return self.barcTools
