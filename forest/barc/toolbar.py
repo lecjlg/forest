@@ -73,6 +73,26 @@ class BARC:
                 saveArea.value = JSON.stringify(outdict);
             """)
         )
+        self.allglyphs = [
+            *range(0x0f0000, 0x0f000a),
+            *range(0x0f0027, 0x0f0031),
+            *range(0x0f004e, 0x0f0059),
+            *range(0x0f0075, 0x0f007f),
+            *range(0x0f009c, 0x0f00a6),
+            *range(0x0f00c3, 0x0f00cd),
+            *range(0x0f00ea, 0x0f00f4),
+            *range(0x0f0111, 0x0f011b),
+            *range(0x0f0138, 0x0f0142),
+            *range(0x0f015f, 0x0f0169),
+        ]  # being the list of unicode character codes for the weather symbols in BARC.woff
+
+        # Make one ColumnDataSource per glyph
+        for glyph in self.allglyphs:
+            self.source['text_stamp' +
+                        chr(glyph)] = ColumnDataSource(data.EMPTY)
+            self.source['text_stamp' + chr(glyph)].add([], "datasize")
+            self.source['text_stamp' + chr(glyph)].add([], "fontsize")
+            self.source['text_stamp' + chr(glyph)].add([], "colour")
 
     def set_glyphs(self):
         """Set Glyphs based on drop down selection
@@ -84,13 +104,6 @@ class BARC:
             self.glyphs = [*range(0x0f0027, 0x0f0031)]
         elif str(new) == "convection":
             self.glyphs = [*range(0x0f0000, 0x0f000a)]
-        # Make one ColumnDataSource per glyph
-        for glyph in self.glyphs:
-            self.source['text_stamp' +
-                        chr(glyph)] = ColumnDataSource(data.EMPTY)
-            self.source['text_stamp' + chr(glyph)].add([], "datasize")
-            self.source['text_stamp' + chr(glyph)].add([], "fontsize")
-            self.source['text_stamp' + chr(glyph)].add([], "colour")
 
     def call(self, attr, old, new):
         """Call back from dropdown click
@@ -98,7 +111,7 @@ class BARC:
         print(new)
         self.barcTools.children.remove(self.glyphrow)
         self.set_glyphs()
-        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=8)
+        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=4)
         self.barcTools.children.insert(2, self.glyphrow)
 
     def polyLine(self):
@@ -257,8 +270,11 @@ class BARC:
         return toolbars  # Toolbar(tools = toolbars)
 
     def display_glyphs(self):
-
+        """Displays the selected glyph buttons
+        """
         buttonspec = {}
+        # self.gyphs is set by the dropDown menu, create a button for
+        # each glyph
         for glyph in self.glyphs:
             buttonspec[chr(glyph)] = chr(glyph)
         buttons = []
@@ -305,6 +321,11 @@ class BARC:
             figure.add_tools(*self.weatherFront(figure, i))
             print(time.monotonic() - q, "s")
 
+            for glyph in self.allglyphs:
+                glyphtool = self.textStamp(chr(glyph))
+                barc_tools.append(glyphtool)
+            figure.add_tools(*barc_tools)
+
             toolBarList.append(
                 ToolbarBox(
                     toolbar=figure.toolbar,
@@ -347,7 +368,7 @@ class BARC:
 
         self.barcTools.children.append(bokeh.layouts.grid(buttons, ncols=6))
         self.barcTools.children.extend([self.dropDown])
-        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=10)
+        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=4)
         self.barcTools.children.append(self.glyphrow)
         self.barcTools.children.extend(
             [self.colourPicker, self.widthPicker, self.saveButton, self.saveArea])
