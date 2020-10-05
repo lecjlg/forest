@@ -111,7 +111,7 @@ class BARC:
         print(new)
         self.barcTools.children.remove(self.glyphrow)
         self.set_glyphs()
-        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=4)
+        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=5)
         self.barcTools.children.insert(2, self.glyphrow)
 
     def polyLine(self):
@@ -368,7 +368,7 @@ class BARC:
 
         self.barcTools.children.append(bokeh.layouts.grid(buttons, ncols=6))
         self.barcTools.children.extend([self.dropDown])
-        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=4)
+        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=5)
         self.barcTools.children.append(self.glyphrow)
         self.barcTools.children.extend(
             [self.colourPicker, self.widthPicker, self.saveButton, self.saveArea])
