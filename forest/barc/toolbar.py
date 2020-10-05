@@ -78,6 +78,8 @@ class BARC:
         """Set Glyphs based on drop down selection
         """
         new = self.dropDown.value
+        # Range of glyphs
+        # Fonts and icon mapping to go here
         if str(new) == "fog":
             self.glyphs = [*range(0x0f0027, 0x0f0031)]
         elif str(new) == "convection":
@@ -91,7 +93,7 @@ class BARC:
             self.source['text_stamp' + chr(glyph)].add([], "colour")
 
     def call(self, attr, old, new):
-        """Call back
+        """Call back from dropdown click
         """
         print(new)
         self.barcTools.children.remove(self.glyphrow)
@@ -255,34 +257,7 @@ class BARC:
         return toolbars  # Toolbar(tools = toolbars)
 
     def display_glyphs(self):
-        toolBarList = []
-        for i, figure in enumerate(self.figures):
-            # label toolbars
-            '''toolBarBoxes.append(
-                Paragraph(
-                text="""Toolbar: Figure %d"""%(i+1),
-                width=200, height=18,
-                css_classes=['barc_p','barc_g%d'%i],
-                )
-            )'''
-        ''' For each figure supplied (if multiple) '''
 
-        for figure in self.figures:
-            barc_tools = []
-            for glyph in self.glyphs:
-                glyphtool = self.textStamp(chr(glyph))
-                barc_tools.append(glyphtool)
-            figure.add_tools(*barc_tools)
-
-            toolBarList.append(
-                ToolbarBox(
-                    toolbar=figure.toolbar,
-                    toolbar_location=None, visible=False,
-                    css_classes=['barc_g%d' % i]
-                )
-            )
-
-        toolBarBoxes = bokeh.models.layouts.Column(children=toolBarList)
         buttonspec = {}
         for glyph in self.glyphs:
             buttonspec[chr(glyph)] = chr(glyph)
@@ -295,7 +270,7 @@ class BARC:
                 margin=(0, 0, 0, 0)
             )
 
-            button.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(buttons=list(toolBarBoxes.select({'tags': ['barc' + each]}))), code="""
+            button.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(buttons=list(self.toolBarBoxes.select({'tags': ['barc' + each]}))), code="""
                 var each;
                 for(each of buttons) { each.active = true; }
             """))
@@ -342,6 +317,7 @@ class BARC:
         # tools.append(self.polyLine())
         # standard buttons
         toolBarBoxes = bokeh.models.layouts.Column(children=toolBarList)
+        self.toolBarBoxes = toolBarBoxes
         buttonspec = {
             'freehand': "🖉",
             'windbarb': "🚩",
@@ -371,7 +347,7 @@ class BARC:
 
         self.barcTools.children.append(bokeh.layouts.grid(buttons, ncols=6))
         self.barcTools.children.extend([self.dropDown])
-        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=8)
+        self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=10)
         self.barcTools.children.append(self.glyphrow)
         self.barcTools.children.extend(
             [self.colourPicker, self.widthPicker, self.saveButton, self.saveArea])
