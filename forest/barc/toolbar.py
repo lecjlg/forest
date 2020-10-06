@@ -37,9 +37,12 @@ class BARC:
         self.colourPicker = bokeh.models.widgets.ColorPicker(
             title='Select stamp colour:', width=350, name="barc_colours", color=self.starting_colour)
         # Dropdown Menu of stamp categories
+        self.stamp_categories=["group0", "group1", "group2", "group3",
+                               "group4", "group5", "group6", "group7",
+                               "group8", "group9", "typhoons"]
         self.dropDown = Select(title="Stamp Category to display:", width=350,
-                               value="convection",
-                               options=["convection", "fog", "dust", "other"])
+                               value="group0",
+                               options=self.stamp_categories)
         self.dropDown.on_change("value", self.call)
         self.set_glyphs()
         # Save area
@@ -100,10 +103,29 @@ class BARC:
         new = self.dropDown.value
         # Range of glyphs
         # Fonts and icon mapping to go here
-        if str(new) == "fog":
-            self.glyphs = [*range(0x0f0027, 0x0f0031)]
-        elif str(new) == "convection":
+        if str(new) == "group0":
             self.glyphs = [*range(0x0f0000, 0x0f000a)]
+        elif str(new) == "group1":
+            self.glyphs = [*range(0x0f0027, 0x0f0031)]
+        elif str(new) == "group2":
+            self.glyphs = [*range(0x0f004e, 0x0f0059)]
+        elif str(new) == "group3":
+            self.glyphs = [*range(0x0f0075, 0x0f007f)]
+        elif str(new) == "group4":
+            self.glyphs = [*range(0x0f009c, 0x0f00a6)]
+        elif str(new) == "group5":
+            self.glyphs = [*range(0x0f00c3, 0x0f00cd)]
+        elif str(new) == "group6":
+            self.glyphs = [*range(0x0f00ea, 0x0f00f4)]
+        elif str(new) == "group7":
+            self.glyphs = [*range(0x0f0111, 0x0f011b)]
+        elif str(new) == "group8":
+            self.glyphs = [*range(0x0f0138, 0x0f0142)]
+        elif str(new) == "group9":
+            self.glyphs = [*range(0x0f015f, 0x0f0169)]
+        elif str(new) == "typhoons":
+            # coming soon
+            self.glyphs = [*range(0x0f015f, 0x0f0169)]
 
     def call(self, attr, old, new):
         """Call back from dropdown click
