@@ -128,7 +128,7 @@ class BARC:
             self.glyphs = [*range(0x0f015f, 0x0f0160)]
         elif str(new) == "typhoons":
             # coming soon
-            self.glyphs = [*range(0x0f015f, 0x0f01690]
+            self.glyphs = [*range(0x0f015f, 0x0f01690)]
 
     def call(self, attr, old, new):
         """Call back from dropdown click
