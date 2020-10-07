@@ -37,11 +37,13 @@ class BARC:
         self.colourPicker = bokeh.models.widgets.ColorPicker(
             title='Select stamp colour:', width=350, name="barc_colours", color=self.starting_colour)
         # Dropdown Menu of stamp categories
+        self.stamp_categories=["group0", "group1", "group2", "group3",
+                               "group4", "group5", "group6", "group7",
+                               "group8", "group9", "typhoons"]
         self.dropDown = Select(title="Stamp Category to display:", width=350,
-                               value="convection",
-                               options=["convection", "fog", "dust", "other"])
+                               value="group0",
+                               options=self.stamp_categories)
         self.dropDown.on_change("value", self.call)
-        self.set_glyphs()
         # Save area
         self.saveArea = bokeh.models.widgets.inputs.TextAreaInput(
             cols=20, max_length=20000)
@@ -73,19 +75,25 @@ class BARC:
                 saveArea.value = JSON.stringify(outdict);
             """)
         )
-        self.allglyphs = [
-            *range(0x0f0000, 0x0f000a),
-            *range(0x0f0027, 0x0f0031),
-            *range(0x0f004e, 0x0f0059),
-            *range(0x0f0075, 0x0f007f),
-            *range(0x0f009c, 0x0f00a6),
-            *range(0x0f00c3, 0x0f00cd),
-            *range(0x0f00ea, 0x0f00f4),
-            *range(0x0f0111, 0x0f011b),
-            *range(0x0f0138, 0x0f0142),
-            *range(0x0f015f, 0x0f0169),
-        ]  # being the list of unicode character codes for the weather symbols in BARC.woff
+        # from BARC.woff take the index
+        # James's icons correspond pw-000 - pw-099 glyph index 2 to 101
+        glyphIndexMap={"983040":2,"983041":3,"983042":4,"983043":5,"983044":6,"983045":7,"983046":8,"983047":9,"983048":10,
+                       "983049":11,"983079":12,"983080":13,"983081":14,"983082":15,"983083":16,"983084":17,"983085":18,"983086":19,"983087":20,
+                       "983088":21,"983118":22,"983119":23,"983120":24,"983121":25,"983122":26,"983123":27,"983124":28,"983125":29,"983126":30,
+                       "983127":31,"983157":32,"983158":33,"983159":34,"983160":35,"983161":36,"983162":37,"983163":38,"983164":39,"983165":40,
+                       "983166":41,"983196":42,"983197":43,"983198":44,"983199":45,"983200":46,"983201":47,"983202":48,"983203":49,"983204":50,
+                       "983205":51,"983235":52,"983236":53,"983237":54,"983238":55,"983239":56,"983240":57,"983241":58,"983242":59,"983243":60,
+                       "983244":61,"983274":62,"983275":63,"983276":64,"983277":65,"983278":66,"983279":67,"983280":68,"983281":69,"983282":70,
+                       "983283":71,"983313":72,"983314":73,"983315":74,"983316":75,"983317":76,"983318":77,"983319":78,"983320":79,"983321":80,
+                       "983322":81,"983352":82,"983353":83,"983354":84,"983355":85,"983356":86,"983357":87,"983358":88,"983359":89,"983360":90,
+                       "983361":91,"983391":92,"983392":93,"983393":94,"983394":95,"983395":96,"983396":97,"983397":98,"983398":99,"983399":100,
+                       "983400":101}
+        glyphcodes = list(map(int, list(glyphIndexMap.keys())))
+        self.allglyphs = glyphcodes
+        self.set_glyphs()
+        icons = ["pw-%03d" % i for i in range(100)]
 
+        self.icons = dict(zip(self.allglyphs, icons))
         # Make one ColumnDataSource per glyph
         for glyph in self.allglyphs:
             self.source['text_stamp' +
@@ -98,17 +106,36 @@ class BARC:
         """Set Glyphs based on drop down selection
         """
         new = self.dropDown.value
+        glyphcodes =self.allglyphs
         # Range of glyphs
         # Fonts and icon mapping to go here
-        if str(new) == "fog":
-            self.glyphs = [*range(0x0f0027, 0x0f0031)]
-        elif str(new) == "convection":
-            self.glyphs = [*range(0x0f0000, 0x0f000a)]
+        if str(new) == "group0":
+            self.glyphs = glyphcodes[0:10]
+        elif str(new) == "group1":
+            self.glyphs = glyphcodes[10:19]
+        elif str(new) == "group2":
+            self.glyphs = glyphcodes[20:30]
+        elif str(new) == "group3":
+            self.glyphs = glyphcodes[30:40]
+        elif str(new) == "group4":
+            self.glyphs = glyphcodes[40:50]
+        elif str(new) == "group5":
+            self.glyphs = glyphcodes[50:60]
+        elif str(new) == "group6":
+            self.glyphs = glyphcodes[60:70]
+        elif str(new) == "group7":
+            self.glyphs = glyphcodes[70:80]
+        elif str(new) == "group8":
+            self.glyphs = glyphcodes[80:90]
+        elif str(new) == "group9":
+            self.glyphs = glyphcodes[90:100]
+        elif str(new) == "typhoons":
+            # coming soon
+            self.glyphs =  glyphcodes[90:100]
 
     def call(self, attr, old, new):
         """Call back from dropdown click
         """
-        print(new)
         self.barcTools.children.remove(self.glyphrow)
         self.set_glyphs()
         self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=5)
@@ -276,12 +303,12 @@ class BARC:
         # self.gyphs is set by the dropDown menu, create a button for
         # each glyph
         for glyph in self.glyphs:
-            buttonspec[chr(glyph)] = chr(glyph)
+            buttonspec[chr(glyph)] = self.icons[glyph]
         buttons = []
         for each in buttonspec:
             button = bokeh.models.widgets.Button(
                 label=buttonspec[each],
-                css_classes=['barc-' + each + '-button', 'barc-button'],
+                css_classes=['barc-' + buttonspec[each] + '-button', 'barc-button'],
                 aspect_ratio=1,
                 margin=(0, 0, 0, 0)
             )
@@ -311,15 +338,17 @@ class BARC:
         for figure in self.figures:
             barc_tools = []
             figure.add_tools(
+                self.polyLine(),
                 bokeh.models.tools.PanTool(tags=['barcpan']),
                 bokeh.models.tools.WheelZoomTool(tags=['barcwheelzoom']),
                 bokeh.models.tools.ResetTool(tags=['barcreset']),
                 bokeh.models.tools.BoxZoomTool(tags=['barcboxzoom']),
+                self.windBarb()
             )
 
-            q = time.monotonic()
-            figure.add_tools(*self.weatherFront(figure, i))
-            print(time.monotonic() - q, "s")
+            #q = time.monotonic()
+            #figure.add_tools(*self.weatherFront(figure, i))
+            #print(time.monotonic() - q, "s")
 
             for glyph in self.allglyphs:
                 glyphtool = self.textStamp(chr(glyph))
@@ -340,33 +369,32 @@ class BARC:
         toolBarBoxes = bokeh.models.layouts.Column(children=toolBarList)
         self.toolBarBoxes = toolBarBoxes
         buttonspec = {
-            'freehand': "🖉",
-            'windbarb': "🚩",
-            'pan': "✥",
-            'boxzoom': "🔍",
-            'wheelzoom': "📜",
-            'reset': "reset",
-            'coldfront': chr(0x0f0186) * 2,
-            'warmfront': chr(0x0f0187) * 2,
-            'occludedfront': chr(0x0f0186) + chr(0x0f0187),
-            'stationaryfront': chr(0x0f0187) + chr(0x0f0188),
+            'freehand': "freehand",
+            'pan': "move",
+            'boxzoom': "boxzoom",
+            'wheelzoom': "wheelzoom",
+            'reset': "undo",
+            'windbarb': "windbarb",
+            'coldfront': "cold",
+            'warmfront': "warm",
+            'occludedfront': "occluded",
+            'stationaryfront': "stationary",
         }
         buttons = []
         for each in buttonspec:
             button = bokeh.models.widgets.Button(
                 label=buttonspec[each],
-                css_classes=['barc-' + each + '-button', 'barc-button'],
+                css_classes=['barc-' + buttonspec[each] + '-button', 'barc-button'],
                 aspect_ratio=1,
                 margin=(0, 0, 0, 0)
             )
-
             button.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(buttons=list(toolBarBoxes.select({'tags': ['barc' + each]}))), code="""
                 var each;
                 for(each of buttons) { each.active = true; }
             """))
             buttons.append(button)
 
-        self.barcTools.children.append(bokeh.layouts.grid(buttons, ncols=6))
+        self.barcTools.children.append(bokeh.layouts.grid(buttons, ncols=5))
         self.barcTools.children.extend([self.dropDown])
         self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=5)
         self.barcTools.children.append(self.glyphrow)
