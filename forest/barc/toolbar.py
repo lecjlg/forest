@@ -44,7 +44,6 @@ class BARC:
                                value="group0",
                                options=self.stamp_categories)
         self.dropDown.on_change("value", self.call)
-        self.set_glyphs()
         # Save area
         self.saveArea = bokeh.models.widgets.inputs.TextAreaInput(
             cols=20, max_length=20000)
@@ -76,19 +75,22 @@ class BARC:
                 saveArea.value = JSON.stringify(outdict);
             """)
         )
-        self.allglyphs = [
-            *range(0x0f0000, 0x0f000a),
-            *range(0x0f0027, 0x0f0031),
-            *range(0x0f004e, 0x0f0059),
-            *range(0x0f0075, 0x0f007f),
-            *range(0x0f009c, 0x0f00a6),
-            *range(0x0f00c3, 0x0f00cd),
-            *range(0x0f00ea, 0x0f00f4),
-            *range(0x0f0111, 0x0f011b),
-            *range(0x0f0138, 0x0f0142),
-            *range(0x0f015f, 0x0f0160),
-        ]  # being the list of unicode character codes for the weather symbols in BARC.woff
-
+        # from BARC.woff take the index
+        # James's icons correspond pw-000 - pw-099 glyph index 2 to 101
+        glyphIndexMap={"983040":2,"983041":3,"983042":4,"983043":5,"983044":6,"983045":7,"983046":8,"983047":9,"983048":10,
+                       "983049":11,"983079":12,"983080":13,"983081":14,"983082":15,"983083":16,"983084":17,"983085":18,"983086":19,"983087":20,
+                       "983088":21,"983118":22,"983119":23,"983120":24,"983121":25,"983122":26,"983123":27,"983124":28,"983125":29,"983126":30,
+                       "983127":31,"983157":32,"983158":33,"983159":34,"983160":35,"983161":36,"983162":37,"983163":38,"983164":39,"983165":40,
+                       "983166":41,"983196":42,"983197":43,"983198":44,"983199":45,"983200":46,"983201":47,"983202":48,"983203":49,"983204":50,
+                       "983205":51,"983235":52,"983236":53,"983237":54,"983238":55,"983239":56,"983240":57,"983241":58,"983242":59,"983243":60,
+                       "983244":61,"983274":62,"983275":63,"983276":64,"983277":65,"983278":66,"983279":67,"983280":68,"983281":69,"983282":70,
+                       "983283":71,"983313":72,"983314":73,"983315":74,"983316":75,"983317":76,"983318":77,"983319":78,"983320":79,"983321":80,
+                       "983322":81,"983352":82,"983353":83,"983354":84,"983355":85,"983356":86,"983357":87,"983358":88,"983359":89,"983360":90,
+                       "983361":91,"983391":92,"983392":93,"983393":94,"983394":95,"983395":96,"983396":97,"983397":98,"983398":99,"983399":100,
+                       "983400":101}
+        glyphcodes = list(map(int, list(glyphIndexMap.keys())))
+        self.allglyphs = glyphcodes
+        self.set_glyphs()
         icons = ["pw-%03d" % i for i in range(100)]
 
         self.icons = dict(zip(self.allglyphs, icons))
@@ -104,31 +106,32 @@ class BARC:
         """Set Glyphs based on drop down selection
         """
         new = self.dropDown.value
+        glyphcodes =self.allglyphs
         # Range of glyphs
         # Fonts and icon mapping to go here
         if str(new) == "group0":
-            self.glyphs = [*range(0x0f0000, 0x0f000a)]
+            self.glyphs = glyphcodes[0:10]
         elif str(new) == "group1":
-            self.glyphs = [*range(0x0f0027, 0x0f0030)]
+            self.glyphs = glyphcodes[10:19]
         elif str(new) == "group2":
-            self.glyphs = [*range(0x0f004e, 0x0f0059)]
+            self.glyphs = glyphcodes[20:30]
         elif str(new) == "group3":
-            self.glyphs = [*range(0x0f0072, 0x0f009c)]
+            self.glyphs = glyphcodes[30:40]
         elif str(new) == "group4":
-            self.glyphs = [*range(0x0f009c, 0x0f00a7)]
+            self.glyphs = glyphcodes[40:50]
         elif str(new) == "group5":
-            self.glyphs = [*range(0x0f00c3, 0x0f00cd)]
+            self.glyphs = glyphcodes[50:60]
         elif str(new) == "group6":
-            self.glyphs = [*range(0x0f00ea, 0x0f00f4)]
+            self.glyphs = glyphcodes[60:70]
         elif str(new) == "group7":
-            self.glyphs = [*range(0x0f0111, 0x0f011b)]
+            self.glyphs = glyphcodes[70:80]
         elif str(new) == "group8":
-            self.glyphs = [*range(0x0f0138, 0x0f0142)]
+            self.glyphs = glyphcodes[80:90]
         elif str(new) == "group9":
-            self.glyphs = [*range(0x0f015f, 0x0f0160)]
+            self.glyphs = glyphcodes[90:100]
         elif str(new) == "typhoons":
             # coming soon
-            self.glyphs = [*range(0x0f015f, 0x0f01690)]
+            self.glyphs =  glyphcodes[90:100]
 
     def call(self, attr, old, new):
         """Call back from dropdown click
@@ -335,11 +338,12 @@ class BARC:
         for figure in self.figures:
             barc_tools = []
             figure.add_tools(
-                bokeh.models.tools.FreehandDrawTool(tags=['barcfreehand']),
+                self.polyLine(),
                 bokeh.models.tools.PanTool(tags=['barcpan']),
                 bokeh.models.tools.WheelZoomTool(tags=['barcwheelzoom']),
                 bokeh.models.tools.ResetTool(tags=['barcreset']),
                 bokeh.models.tools.BoxZoomTool(tags=['barcboxzoom']),
+                self.windBarb()
             )
 
             #q = time.monotonic()
