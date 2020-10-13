@@ -82,7 +82,6 @@ export class FrontDrawToolView extends PolyToolView {
       xs.push(nx)
       if (x0key) {
         //once there are 4 points, and every three afterwards
-        console.log((xs.length-1)%3)
         if((xs.length-1) == 4 || (((xs.length-2) % 3) ==0 && (xs.length-1) > 3))
         {
             //push the first value to beziér origin (x0) and so on
