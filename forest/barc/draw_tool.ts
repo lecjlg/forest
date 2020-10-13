@@ -82,14 +82,15 @@ export class FrontDrawToolView extends PolyToolView {
       xs.push(nx)
       if (x0key) {
         //once there are 4 points, and every three afterwards
-        if(((xs.length % 3) ==0 && xs.length > 3) || xs.length==4)
+        console.log((xs.length-1)%3)
+        if((xs.length-1) == 4 || (((xs.length-2) % 3) ==0 && (xs.length-1) > 3))
         {
             //push the first value to beziér origin (x0) and so on
-            cds.data[x0key][xidx] = xs[xs.length -5]
-            cds.data[cx0key][xidx] = xs[xs.length -4]
-            cds.data[cx1key][xidx] = xs[xs.length -3]
+            cds.data[x0key][xidx] = xs[(xs.length-1) -4]
+            cds.data[cx0key][xidx] = xs[(xs.length-1) -3]
+            cds.data[cx1key][xidx] = xs[(xs.length-1) -2]
             //push current x as x1
-            cds.data[x1key][xidx] = xs[xs.length -2]
+            cds.data[x1key][xidx] = xs[(xs.length-1) -1]
         } 
       }
       const yidx = cds.data[ykey].length-1
@@ -102,14 +103,14 @@ export class FrontDrawToolView extends PolyToolView {
       }
       ys.push(ny) 
       if (y0key) {
-        if(((ys.length % 3) ==0 && ys.length > 3) || ys.length==4)
+        if((ys.length-1) ==4 || (((ys.length-2) % 3) ==0 && (ys.length-1) > 3))
         {
             //set the first value to beziér origin (y0) and so on
-            cds.data[y0key][yidx] = ys[ys.length -5]
-            cds.data[cy0key][yidx] = ys[ys.length -4]
-            cds.data[cy1key][yidx] = ys[ys.length -3]
-            //push current y as y1
-            cds.data[y1key][yidx] = ys[ys.length -2]
+            cds.data[y0key][yidx] = ys[(ys.length-1) -4]
+            cds.data[cy0key][yidx] = ys[(ys.length-1) -3]
+            cds.data[cy1key][yidx] = ys[(ys.length-1) -2]
+            //push current y as y0
+            cds.data[y1key][yidx] = ys[(ys.length-1) -1]
 
             //push changes (only done on y-axis as there's no point doing it twice)
             cds.change.emit()

@@ -25,7 +25,6 @@ renderers = [
 
 source.js_on_change('data',
    CustomJS(args=dict(datasource =source), code="""
-      console.log(datasource.data);
    """
    ));
 
