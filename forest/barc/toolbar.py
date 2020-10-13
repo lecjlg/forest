@@ -3,7 +3,7 @@ import bokeh.models
 import time
 
 from bokeh.models import ColumnDataSource, Paragraph, Select
-from bokeh.models.glyphs import Text
+from bokeh.models.glyphs import Text, Patch
 from bokeh.core.properties import value
 from bokeh.models.tools import PolyDrawTool, PointDrawTool, ToolbarBox, FreehandDrawTool, ProxyToolbar, Toolbar
 from bokeh.events import ButtonClick
@@ -26,6 +26,7 @@ class BARC:
         self.document = bokeh.plotting.curdoc()
         self.barcTools = bokeh.models.layouts.Column(name="barcTools")
         self.source['polyline'] = ColumnDataSource(data.EMPTY)
+        self.source['poly_draw'] = ColumnDataSource(data.EMPTY)
         self.source['barb'] = ColumnDataSource(data.EMPTY)
 
         #self.source['text_stamp'] = {}
@@ -75,7 +76,7 @@ class BARC:
                 saveArea.value = JSON.stringify(outdict);
             """)
         )
-        # from BARC.woff take the index
+        # from BARC.woff take the index dictionary
         # James's icons correspond pw-000 - pw-099 glyph index 2 to 101
         glyphIndexMap={"983040":2,"983041":3,"983042":4,"983043":5,"983044":6,"983045":7,"983046":8,"983047":9,"983048":10,
                        "983049":11,"983079":12,"983080":13,"983081":14,"983082":15,"983083":16,"983084":17,"983085":18,"983086":19,"983087":20,
@@ -92,7 +93,7 @@ class BARC:
         self.allglyphs = glyphcodes
         self.set_glyphs()
         icons = ["pw-%03d" % i for i in range(100)]
-
+        # Make a dictionary from list of codes and icon names
         self.icons = dict(zip(self.allglyphs, icons))
         # Make one ColumnDataSource per glyph
         for glyph in self.allglyphs:
@@ -169,6 +170,46 @@ class BARC:
         )
         self.source['polyline'].js_on_change('data',
                                              bokeh.models.CustomJS(args=dict(datasource=self.source['polyline'], colourPicker=self.colourPicker, widthPicker=self.widthPicker, saveArea=self.saveArea, sources=self.source), code="""
+                for(var g = 0; g < datasource.data['colour'].length; g++)
+                {
+                    if(!datasource.data['colour'][g])
+                    {
+                        datasource.data['colour'][g] = colourPicker.color;
+                    }
+                    if(!datasource.data['width'][g])
+                    {
+                        datasource.data['width'][g] = widthPicker.value;
+                    }
+                }
+                """)
+                                             )
+
+        return tool2
+
+    def polyDraw(self):
+        '''
+            Creates a poly draw tool for drawing on the Forest maps.
+
+            :returns: a PolyDrawTool instance
+        '''
+        # colour picker means no longer have separate colour line options
+        render_lines = []
+        self.source['poly_draw'].add([], "colour")
+        self.source['poly_draw'].add([], "width")
+        for figure in self.figures:
+            render_lines.append(figure.patch(
+                source=self.source['poly_draw'],
+                alpha=0.3,
+                level="overlay")
+            )
+
+        tool2 = PolyDrawTool(
+            renderers=[render_lines[0]],
+            tags=['barcpoly_draw'],
+            name="barcpoly_draw"
+        )
+        self.source['poly_draw'].js_on_change('data',
+                                             bokeh.models.CustomJS(args=dict(datasource=self.source['poly_draw'], colourPicker=self.colourPicker, widthPicker=self.widthPicker, saveArea=self.saveArea, sources=self.source), code="""
                 for(var g = 0; g < datasource.data['colour'].length; g++)
                 {
                     if(!datasource.data['colour'][g])
@@ -338,11 +379,16 @@ class BARC:
         for figure in self.figures:
             barc_tools = []
             figure.add_tools(
-                self.polyLine(),
+                bokeh.models.tools.UndoTool(tags=['barcundo']),
+                bokeh.models.tools.RedoTool(tags=['barcredo']),
+                bokeh.models.tools.ZoomInTool(tags=['barczoom_in']),
+                bokeh.models.tools.ZoomOutTool(tags=['barczoom_out']),
                 bokeh.models.tools.PanTool(tags=['barcpan']),
                 bokeh.models.tools.WheelZoomTool(tags=['barcwheelzoom']),
-                bokeh.models.tools.ResetTool(tags=['barcreset']),
                 bokeh.models.tools.BoxZoomTool(tags=['barcboxzoom']),
+                bokeh.models.tools.ResetTool(tags=['barcreset']),
+                self.polyLine(),
+                self.polyDraw(),
                 self.windBarb()
             )
 
@@ -368,23 +414,26 @@ class BARC:
         # standard buttons
         toolBarBoxes = bokeh.models.layouts.Column(children=toolBarList)
         self.toolBarBoxes = toolBarBoxes
-        buttonspec = {
-            'freehand': "freehand",
+        buttonspec1 = {
+            'undo':'undo',
+            'redo':'redo',
+            'zoom_in':'zoom_in',
+            'zoom_out':'zoom_out',
             'pan': "move",
             'boxzoom': "boxzoom",
             'wheelzoom': "wheelzoom",
-            'reset': "undo",
-            'windbarb': "windbarb",
-            'coldfront': "cold",
-            'warmfront': "warm",
-            'occludedfront': "occluded",
-            'stationaryfront': "stationary",
+            'reset' : 'reset',
+            'boxedit': 'boxedit',
+            'freehand': "freehand",
+            'poly_draw': 'poly_draw',
+            'poly_edit': 'poly_edit',
+            'textbox' : 'textbox',
         }
-        buttons = []
-        for each in buttonspec:
+        buttons1 = []
+        for each in buttonspec1:
             button = bokeh.models.widgets.Button(
-                label=buttonspec[each],
-                css_classes=['barc-' + buttonspec[each] + '-button', 'barc-button'],
+                label=buttonspec1[each],
+                css_classes=['barc-' + buttonspec1[each] + '-button', 'barc-button'],
                 aspect_ratio=1,
                 margin=(0, 0, 0, 0)
             )
@@ -392,9 +441,31 @@ class BARC:
                 var each;
                 for(each of buttons) { each.active = true; }
             """))
-            buttons.append(button)
+            buttons1.append(button)
 
-        self.barcTools.children.append(bokeh.layouts.grid(buttons, ncols=5))
+        buttonspec2 = {
+            'windbarb': "windbarb",
+            'coldfront': "cold",
+            'warmfront': "warm",
+            'occludedfront': "occluded",
+            'stationaryfront': "stationary",
+        }
+        buttons2 = []
+        for each in buttonspec2:
+            button = bokeh.models.widgets.Button(
+                label=buttonspec2[each],
+                css_classes=['barc-' + buttonspec2[each] + '-button', 'barc-button'],
+                aspect_ratio=1,
+                margin=(0, 0, 0, 0)
+            )
+            button.js_on_event(ButtonClick, bokeh.models.CustomJS(args=dict(buttons=list(toolBarBoxes.select({'tags': ['barc' + each]}))), code="""
+                var each;
+                for(each of buttons) { each.active = true; }
+            """))
+            buttons2.append(button)
+
+        self.barcTools.children.append(bokeh.layouts.grid(buttons1, ncols=7))
+        self.barcTools.children.append(bokeh.layouts.grid(buttons2, ncols=5))
         self.barcTools.children.extend([self.dropDown])
         self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=5)
         self.barcTools.children.append(self.glyphrow)
