@@ -47,17 +47,18 @@ export class FrontDrawToolView extends PolyToolView {
     const [cx0key, cy0key] = [glyph.cx0.field, glyph.cy0.field]
     const [cx1key, cy1key] = [glyph.cx1.field, glyph.cy1.field]
     if (mode == 'new') {
+      console.log(cds.data);
       this._pop_glyphs(cds, this.model.num_objects)
       if (xkey) cds.get_array(xkey).push([x, x])
       if (ykey) cds.get_array(ykey).push([y, y])
-      if (x0key) cds.get_array(x0key).push([null, null])
-      if (y0key) cds.get_array(y0key).push([null, null])
-      if (x1key) cds.get_array(x1key).push([null, null])
-      if (y1key) cds.get_array(y1key).push([null, null])
-      if (cx0key) cds.get_array(cx0key).push([null, null])
-      if (cy0key) cds.get_array(cy0key).push([null, null])
-      if (cx1key) cds.get_array(cx1key).push([null, null])
-      if (cy1key) cds.get_array(cy1key).push([null, null])
+      if (x0key) cds.get_array(x0key).push([])
+      if (y0key) cds.get_array(y0key).push([])
+      if (x1key) cds.get_array(x1key).push([])
+      if (y1key) cds.get_array(y1key).push([])
+      if (cx0key) cds.get_array(cx0key).push([])
+      if (cy0key) cds.get_array(cy0key).push([])
+      if (cx1key) cds.get_array(cx1key).push([])
+      if (cy1key) cds.get_array(cy1key).push([])
       this._pad_empty_columns(cds, [xkey, ykey, x0key, y0key, x1key, y1key, cx0key, cy0key, cx1key, cy1key])
     } else if (mode == 'edit') {
       if (xkey) {
@@ -79,17 +80,64 @@ export class FrontDrawToolView extends PolyToolView {
         xs = Array.from(xs)
         cds.data[xkey][xidx] = xs
       }
+      //get columns
+      let x0 = cds.get_array(x0key)
+      let cx0 = cds.get_array(cx0key)
+      let cx1 = cds.get_array(cx1key)
+      let x1 = cds.get_array(x1key)
+      let y0 = cds.get_array(y0key)
+      let cy0 = cds.get_array(cy0key)
+      let cy1 = cds.get_array(cy1key)
+      let y1 = cds.get_array(y1key)
+      let angle = cds.get_array('angle')
+
       xs.push(nx)
       if (x0key) {
         //once there are 4 points, and every three afterwards
         if((xs.length-1) == 4 || (((xs.length-2) % 3) ==0 && (xs.length-1) > 3))
         {
             //push the first value to beziér origin (x0) and so on
-            cds.data[x0key][xidx] = xs[(xs.length-1) -4]
-            cds.data[cx0key][xidx] = xs[(xs.length-1) -3]
-            cds.data[cx1key][xidx] = xs[(xs.length-1) -2]
+            if(isArray(x0[xidx]))
+            {
+               //contains the empty padding array, replace it
+               x0[xidx] =xs[(xs.length-1) -4]
+            } else {
+               //add an extra one
+               x0.push(xs[(xs.length-1) -4])
+            }
+            //cds.data[x0key][xidx] = xs[(xs.length-1) -4]
+            if(isArray(cx0[xidx]))
+            {
+               //contains the empty padding array, replace it
+               cx0[xidx] =xs[(xs.length-1) -3]
+            } else {
+               //add an extra one
+               cx0.push(xs[(xs.length-1) -3])
+            }
+            //cds.data[cx0key][xidx] = xs[(xs.length-1) -3]
+            if(isArray(cx1[xidx]))
+            {
+               //contains the empty padding array, replace it
+               cx1[xidx] =xs[(xs.length-1) -2]
+            } else {
+               //add an extra one
+               cx1.push(xs[(xs.length-1) -2])
+            }
+            //cds.data[cx1key][xidx] = xs[(xs.length-1) -2]
+            //push current y as x1
+            if(isArray(x1[xidx]))
+            {
+               //contains the empty padding array, replace it
+               x1[xidx] =xs[(xs.length-1) -1]
+            } else {
+               //add an extra one
+               x1.push(xs[(xs.length-1) -1])
+            }
+            //cds.data[x0key][xidx] = xs[(xs.length-1) -4]
+            //cds.data[cx0key][xidx] = xs[(xs.length-1) -3]
+            //cds.data[cx1key][xidx] = xs[(xs.length-1) -2]
             //push current x as x1
-            cds.data[x1key][xidx] = xs[(xs.length-1) -1]
+            //cds.data[x1key][xidx] = xs[(xs.length-1) -1]
         } 
       }
       const yidx = cds.data[ykey].length-1
@@ -105,12 +153,59 @@ export class FrontDrawToolView extends PolyToolView {
         if((ys.length-1) ==4 || (((ys.length-2) % 3) ==0 && (ys.length-1) > 3))
         {
             //set the first value to beziér origin (y0) and so on
-            cds.data[y0key][yidx] = ys[(ys.length-1) -4]
-            cds.data[cy0key][yidx] = ys[(ys.length-1) -3]
-            cds.data[cy1key][yidx] = ys[(ys.length-1) -2]
-            //push current y as y0
-            cds.data[y1key][yidx] = ys[(ys.length-1) -1]
+            if(isArray(y0[yidx]))
+            {
+               //contains the empty padding array, replace it
+               y0[xidx] =ys[(ys.length-1) -4]
+            } else {
+               //add an extra one
+               y0.push(ys[(ys.length-1) -4])
+            }
+            //cds.data[y0key][yidx] = ys[(ys.length-1) -4]
+            if(isArray(cy0[yidx]))
+            {
+               //contains the empty padding array, replace it
+               cy0[xidx] =ys[(ys.length-1) -3]
+            } else {
+               //add an extra one
+               cy0.push(ys[(ys.length-1) -3])
+            }
+            //cds.data[cy0key][yidx] = ys[(ys.length-1) -3]
+            if(isArray(cy1[yidx]))
+            {
+               //contains the empty padding array, replace it
+               cy1[xidx] =ys[(ys.length-1) -2]
+            } else {
+               //add an extra one
+               cy1.push(ys[(ys.length-1) -2])
+            }
+            //cds.data[cy1key][yidx] = ys[(ys.length-1) -2]
+            //push current y as y1
+            if(isArray(y1[yidx]))
+            {
+               //contains the empty padding array, replace it
+               y1[xidx] =ys[(ys.length-1) -1]
+            } else {
+               //add an extra one
+               y1.push(ys[(ys.length-1) -1])
+            }
+            //cds.data[y1key][yidx] = ys[(ys.length-1) -1]
 
+
+            //add padding to columns as required (all must be the same length)
+            let xs_a = cds.get_array(xkey)
+            let ys_a = cds.get_array(ykey)
+            const pad_to = Math.max(...[xs_a.length, ys_a.length, x0.length, y0.length, x1.length, y1.length, cx0.length, cy0.length, cx1.length, cy1.length])
+            const  cols = [xs_a, ys_a, angle]
+            cols.forEach(function(col) {
+               while(col.length < pad_to)
+               {  
+                  col.unshift(null);
+                  console.log(col.length, pad_to)
+               }
+            })
+            
+            
             //push changes (only done on y-axis as there's no point doing it twice)
             cds.change.emit()
         } 
