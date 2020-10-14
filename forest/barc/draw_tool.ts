@@ -200,14 +200,12 @@ export class FrontDrawToolView extends PolyToolView {
             cols.forEach(function(col) {
                while(col.length < pad_to)
                {  
-                  col.unshift(null);
+                  col.unshift(Array([]));
                   console.log(col.length, pad_to)
                }
             })
             
             
-            //push changes (only done on y-axis as there's no point doing it twice)
-            cds.change.emit()
         } 
       }
      }
