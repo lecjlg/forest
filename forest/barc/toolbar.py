@@ -5,7 +5,7 @@ import time
 from bokeh.models import ColumnDataSource, Paragraph, Select
 from bokeh.models.glyphs import Text, Patch
 from bokeh.core.properties import value
-from bokeh.models.tools import PolyDrawTool, PointDrawTool, ToolbarBox, FreehandDrawTool, ProxyToolbar, Toolbar
+from bokeh.models.tools import PolyDrawTool, PolyEditTool, BoxEditTool, PointDrawTool, ToolbarBox, FreehandDrawTool, ProxyToolbar, Toolbar
 from bokeh.events import ButtonClick
 from forest import wind, data, tools, redux
 import forest.middlewares as mws
@@ -27,6 +27,7 @@ class BARC:
         self.barcTools = bokeh.models.layouts.Column(name="barcTools")
         self.source['polyline'] = ColumnDataSource(data.EMPTY)
         self.source['poly_draw'] = ColumnDataSource(data.EMPTY)
+        self.source['box_edit'] = ColumnDataSource(data.EMPTY)
         self.source['barb'] = ColumnDataSource(data.EMPTY)
 
         #self.source['text_stamp'] = {}
@@ -197,9 +198,12 @@ class BARC:
         self.source['poly_draw'].add([], "colour")
         self.source['poly_draw'].add([], "width")
         for figure in self.figures:
-            render_lines.append(figure.patch(
+            render_lines.append(figure.patches(
+                xs='xs',
+                ys='ys',
                 source=self.source['poly_draw'],
                 alpha=0.3,
+                color="colour",
                 level="overlay")
             )
 
@@ -220,6 +224,70 @@ class BARC:
                     {
                         datasource.data['width'][g] = widthPicker.value;
                     }
+                }
+                """)
+                                             )
+
+        return tool2
+
+    def polyEdit(self):
+        '''
+            Creates a poly draw tool for drawing on the Forest maps.
+
+            :returns: a PolyDrawTool instance
+        '''
+        render_lines = []
+        for figure in self.figures:
+            render_lines.append(figure.patches(
+                xs='xs',
+                ys='ys',
+                source=self.source['poly_draw'],
+                alpha=0.3,
+                color="colour",
+                level="overlay")
+            )
+
+        tool2 = PolyEditTool(
+                renderers=render_lines[0],
+            tags=['barcpoly_edit'],
+            name="barcpoly_edit"
+        )
+
+
+        return tool2
+
+    def boxEdit(self):
+        '''
+            Creates a box edit tool for drawing on the Forest maps.
+
+            :returns: a BoxEditTool instance
+        '''
+        render_lines = []
+        self.source['box_edit'].add([], "colour")
+        for figure in self.figures:
+            render_lines.append(figure.Rect(
+                x='xs',
+                y='ys',
+                source=self.source['box_edit'],
+                alpha=0.3,
+                color="colour",
+                level="overlay")
+            )
+
+        tool2 = BoxEditTool(
+            renderers=render_lines,
+            tags=['barcbox_edit'],
+            name="barcbox_edit"
+        )
+        self.source['box_edit'].js_on_change('data',
+                                             bokeh.models.CustomJS(args=dict(datasource=self.source['box_edit'], colourPicker=self.colourPicker, saveArea=self.saveArea, sources=self.source), code="""
+                for(var g = 0; g < datasource.data['colour'].length; g++)
+                {
+                    if(!datasource.data['colour'][g])
+                    {
+                        datasource.data['colour'][g] = colourPicker.color;
+                    }
+
                 }
                 """)
                                              )
@@ -387,8 +455,10 @@ class BARC:
                 bokeh.models.tools.WheelZoomTool(tags=['barcwheelzoom']),
                 bokeh.models.tools.BoxZoomTool(tags=['barcboxzoom']),
                 bokeh.models.tools.ResetTool(tags=['barcreset']),
+                self.boxEdit(),
                 self.polyLine(),
                 self.polyDraw(),
+                self.polyEdit(),
                 self.windBarb()
             )
 
@@ -423,7 +493,7 @@ class BARC:
             'boxzoom': "boxzoom",
             'wheelzoom': "wheelzoom",
             'reset' : 'reset',
-            'boxedit': 'boxedit',
+            'box_edit': 'box_edit',
             'freehand': "freehand",
             'poly_draw': 'poly_draw',
             'poly_edit': 'poly_edit',

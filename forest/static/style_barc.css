@@ -36,7 +36,7 @@ div#diagrams.diagrams div.barc-button.barc-reset-button button {
   color: transparent !important;
 }
 
-div#diagrams.diagrams div.barc-button.barc-boxedit-button button {
+div#diagrams.diagrams div.barc-button.barc-box_edit-button button {
   background-image: url("icons/navtools/boxadd.png");
   color: transparent !important;
 }
