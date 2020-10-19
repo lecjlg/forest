@@ -265,7 +265,7 @@ class BARC:
         render_lines = []
         self.source['box_edit'].add([], "colour")
         for figure in self.figures:
-            render_lines.append(figure.Rect(
+            render_lines.append(figure.rect(
                 x='xs',
                 y='ys',
                 source=self.source['box_edit'],
@@ -458,7 +458,6 @@ class BARC:
                 self.boxEdit(),
                 self.polyLine(),
                 self.polyDraw(),
-                self.polyEdit(),
                 self.windBarb()
             )
 
