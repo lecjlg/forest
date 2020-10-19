@@ -39,9 +39,9 @@ class BARC:
         self.colourPicker = bokeh.models.widgets.ColorPicker(
             title='Select stamp colour:', width=350, name="barc_colours", color=self.starting_colour)
         # Dropdown Menu of stamp categories
-        self.stamp_categories=["group0", "group1", "group2", "group3",
-                               "group4", "group5", "group6", "group7",
-                               "group8", "group9", "typhoons"]
+        self.stamp_categories = ["group0", "group1", "group2", "group3",
+                                 "group4", "group5", "group6", "group7",
+                                 "group8", "group9", "typhoons"]
         self.dropDown = Select(title="Stamp Category to display:", width=350,
                                value="group0",
                                options=self.stamp_categories)
@@ -79,17 +79,17 @@ class BARC:
         )
         # from BARC.woff take the index dictionary
         # James's icons correspond pw-000 - pw-099 glyph index 2 to 101
-        glyphIndexMap={"983040":2,"983041":3,"983042":4,"983043":5,"983044":6,"983045":7,"983046":8,"983047":9,"983048":10,
-                       "983049":11,"983079":12,"983080":13,"983081":14,"983082":15,"983083":16,"983084":17,"983085":18,"983086":19,"983087":20,
-                       "983088":21,"983118":22,"983119":23,"983120":24,"983121":25,"983122":26,"983123":27,"983124":28,"983125":29,"983126":30,
-                       "983127":31,"983157":32,"983158":33,"983159":34,"983160":35,"983161":36,"983162":37,"983163":38,"983164":39,"983165":40,
-                       "983166":41,"983196":42,"983197":43,"983198":44,"983199":45,"983200":46,"983201":47,"983202":48,"983203":49,"983204":50,
-                       "983205":51,"983235":52,"983236":53,"983237":54,"983238":55,"983239":56,"983240":57,"983241":58,"983242":59,"983243":60,
-                       "983244":61,"983274":62,"983275":63,"983276":64,"983277":65,"983278":66,"983279":67,"983280":68,"983281":69,"983282":70,
-                       "983283":71,"983313":72,"983314":73,"983315":74,"983316":75,"983317":76,"983318":77,"983319":78,"983320":79,"983321":80,
-                       "983322":81,"983352":82,"983353":83,"983354":84,"983355":85,"983356":86,"983357":87,"983358":88,"983359":89,"983360":90,
-                       "983361":91,"983391":92,"983392":93,"983393":94,"983394":95,"983395":96,"983396":97,"983397":98,"983398":99,"983399":100,
-                       "983400":101}
+        glyphIndexMap = {"983040": 2, "983041": 3, "983042": 4, "983043": 5, "983044": 6, "983045": 7, "983046": 8, "983047": 9, "983048": 10,
+                         "983049": 11, "983079": 12, "983080": 13, "983081": 14, "983082": 15, "983083": 16, "983084": 17, "983085": 18, "983086": 19, "983087": 20,
+                         "983088": 21, "983118": 22, "983119": 23, "983120": 24, "983121": 25, "983122": 26, "983123": 27, "983124": 28, "983125": 29, "983126": 30,
+                         "983127": 31, "983157": 32, "983158": 33, "983159": 34, "983160": 35, "983161": 36, "983162": 37, "983163": 38, "983164": 39, "983165": 40,
+                         "983166": 41, "983196": 42, "983197": 43, "983198": 44, "983199": 45, "983200": 46, "983201": 47, "983202": 48, "983203": 49, "983204": 50,
+                         "983205": 51, "983235": 52, "983236": 53, "983237": 54, "983238": 55, "983239": 56, "983240": 57, "983241": 58, "983242": 59, "983243": 60,
+                         "983244": 61, "983274": 62, "983275": 63, "983276": 64, "983277": 65, "983278": 66, "983279": 67, "983280": 68, "983281": 69, "983282": 70,
+                         "983283": 71, "983313": 72, "983314": 73, "983315": 74, "983316": 75, "983317": 76, "983318": 77, "983319": 78, "983320": 79, "983321": 80,
+                         "983322": 81, "983352": 82, "983353": 83, "983354": 84, "983355": 85, "983356": 86, "983357": 87, "983358": 88, "983359": 89, "983360": 90,
+                         "983361": 91, "983391": 92, "983392": 93, "983393": 94, "983394": 95, "983395": 96, "983396": 97, "983397": 98, "983398": 99, "983399": 100,
+                         "983400": 101}
         glyphcodes = list(map(int, list(glyphIndexMap.keys())))
         self.allglyphs = glyphcodes
         self.set_glyphs()
@@ -108,7 +108,7 @@ class BARC:
         """Set Glyphs based on drop down selection
         """
         new = self.dropDown.value
-        glyphcodes =self.allglyphs
+        glyphcodes = self.allglyphs
         # Range of glyphs
         # Fonts and icon mapping to go here
         if str(new) == "group0":
@@ -133,7 +133,7 @@ class BARC:
             self.glyphs = glyphcodes[90:100]
         elif str(new) == "typhoons":
             # coming soon
-            self.glyphs =  glyphcodes[90:100]
+            self.glyphs = glyphcodes[90:100]
 
     def call(self, attr, old, new):
         """Call back from dropdown click
@@ -213,7 +213,7 @@ class BARC:
             name="barcpoly_draw"
         )
         self.source['poly_draw'].js_on_change('data',
-                                             bokeh.models.CustomJS(args=dict(datasource=self.source['poly_draw'], colourPicker=self.colourPicker, widthPicker=self.widthPicker, saveArea=self.saveArea, sources=self.source), code="""
+                                              bokeh.models.CustomJS(args=dict(datasource=self.source['poly_draw'], colourPicker=self.colourPicker, widthPicker=self.widthPicker, saveArea=self.saveArea, sources=self.source), code="""
                 for(var g = 0; g < datasource.data['colour'].length; g++)
                 {
                     if(!datasource.data['colour'][g])
@@ -226,7 +226,7 @@ class BARC:
                     }
                 }
                 """)
-                                             )
+                                              )
 
         return tool2
 
@@ -248,11 +248,10 @@ class BARC:
             )
 
         tool2 = PolyEditTool(
-                renderers=render_lines[0],
+            renderers=render_lines[0],
             tags=['barcpoly_edit'],
             name="barcpoly_edit"
         )
-
 
         return tool2
 
@@ -417,7 +416,8 @@ class BARC:
         for each in buttonspec:
             button = bokeh.models.widgets.Button(
                 label=buttonspec[each],
-                css_classes=['barc-' + buttonspec[each] + '-button', 'barc-button'],
+                css_classes=['barc-' + buttonspec[each] +
+                             '-button', 'barc-button'],
                 aspect_ratio=1,
                 margin=(0, 0, 0, 0)
             )
@@ -484,25 +484,26 @@ class BARC:
         toolBarBoxes = bokeh.models.layouts.Column(children=toolBarList)
         self.toolBarBoxes = toolBarBoxes
         buttonspec1 = {
-            'undo':'undo',
-            'redo':'redo',
-            'zoom_in':'zoom_in',
-            'zoom_out':'zoom_out',
+            'undo': 'undo',
+            'redo': 'redo',
+            'zoom_in': 'zoom_in',
+            'zoom_out': 'zoom_out',
             'pan': "move",
             'boxzoom': "boxzoom",
             'wheelzoom': "wheelzoom",
-            'reset' : 'reset',
+            'reset': 'reset',
             'box_edit': 'box_edit',
             'freehand': "freehand",
             'poly_draw': 'poly_draw',
             'poly_edit': 'poly_edit',
-            'textbox' : 'textbox',
+            'textbox': 'textbox',
         }
         buttons1 = []
         for each in buttonspec1:
             button = bokeh.models.widgets.Button(
                 label=buttonspec1[each],
-                css_classes=['barc-' + buttonspec1[each] + '-button', 'barc-button'],
+                css_classes=['barc-' + buttonspec1[each] +
+                             '-button', 'barc-button'],
                 aspect_ratio=1,
                 margin=(0, 0, 0, 0)
             )
@@ -523,7 +524,8 @@ class BARC:
         for each in buttonspec2:
             button = bokeh.models.widgets.Button(
                 label=buttonspec2[each],
-                css_classes=['barc-' + buttonspec2[each] + '-button', 'barc-button'],
+                css_classes=['barc-' + buttonspec2[each] +
+                             '-button', 'barc-button'],
                 aspect_ratio=1,
                 margin=(0, 0, 0, 0)
             )
