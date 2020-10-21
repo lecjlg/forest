@@ -220,7 +220,6 @@ export class FrontDrawToolView extends PolyToolView {
             //ts.glyph.x = {field: 'xs'}
             //ts.glyph.y = {field: 'ys'}
             console.log(ts)
-            ts.data_source.change.emit()
         } 
       }
      }
