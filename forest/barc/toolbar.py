@@ -52,12 +52,12 @@ class BARC:
         self.figures = figures
         self.document = bokeh.plotting.curdoc()
         self.barcTools = bokeh.models.layouts.Column(name="barcTools")
+        # initalise sources
         self.source['polyline'] = ColumnDataSource(data.EMPTY)
         self.source['poly_draw'] = ColumnDataSource(data.EMPTY)
         self.source['box_edit'] = ColumnDataSource(data.EMPTY)
         self.source['barb'] = ColumnDataSource(data.EMPTY)
-
-        #self.source['text_stamp'] = {}
+        # set intial width and colours
         self.starting_colour = "black"  # in CSS-type spec
         self.starting_width = 2
         self.widthPicker = bokeh.models.widgets.Slider(
@@ -184,6 +184,7 @@ class BARC:
 
     def call(self, attr, old, new):
         """Call back from dropdown click
+         Removes and inserts new glyphrow
         """
         self.barcTools.children.remove(self.glyphrow)
         self.set_glyphs()
@@ -244,7 +245,6 @@ class BARC:
         # colour picker means no longer have separate colour line options
         render_lines = []
         self.source['poly_draw'].add([], "colour")
-        self.source['poly_draw'].add([], "width")
         for figure in self.figures:
             render_lines.append(figure.patches(
                 xs='xs',
@@ -286,6 +286,7 @@ class BARC:
 
             :returns: a PolyDrawTool instance
         '''
+        # Not functional yet
         render_lines = []
         for figure in self.figures:
             render_lines.append(figure.patches(
@@ -311,6 +312,7 @@ class BARC:
 
             :returns: a BoxEditTool instance
         '''
+        # Not functional yet
         render_lines = []
         self.source['box_edit'].add([], "colour")
         for figure in self.figures:
