@@ -5,9 +5,14 @@ import {isArray} from "core/util/types"
 import {MultiLine} from "models/glyphs/multi_line"
 import {Patches} from "models/glyphs/patches"
 import {Bezier} from "models/glyphs/bezier"
+//import {Circle} from "models/glyphs/circle"
+//import {Text} from "models/glyphs/text"
 import {PolyTool, PolyToolView} from "models/tools/edit/poly_tool"
 import {bk_tool_icon_poly_draw} from "styles/icons"
 //import {patch_to_column} from "models/sources/column_data_source"
+
+import {ColumnDataSource} from "models/sources/column_data_source"
+//import {GlyphRenderer} from "models/renderers/glyph_renderer"
 
 export interface HasPolyGlyph {
   glyph: MultiLine | Patches | Bezier
@@ -47,7 +52,6 @@ export class FrontDrawToolView extends PolyToolView {
     const [cx0key, cy0key] = [glyph.cx0.field, glyph.cy0.field]
     const [cx1key, cy1key] = [glyph.cx1.field, glyph.cy1.field]
     if (mode == 'new') {
-      console.log(cds.data);
       this._pop_glyphs(cds, this.model.num_objects)
       if (xkey) cds.get_array(xkey).push([x, x])
       if (ykey) cds.get_array(ykey).push([y, y])
@@ -201,11 +205,22 @@ export class FrontDrawToolView extends PolyToolView {
                while(col.length < pad_to)
                {  
                   col.unshift(Array([]));
-                  console.log(col.length, pad_to)
                }
             })
-            
-            
+            const test_ds = new ColumnDataSource({ data: { x: [1, 0.5, 2], y: [1, 0.5, 2] , angle: [0,0,0]}})
+            const ts = this.model.renderers[2]
+            /*const ts = new Text({
+               x: {field: "xs"},
+               y: {field: "ys"},
+               text: "Q"
+            })*/
+            //console.log(this.parent.model)
+            //this.parent.model.glyphs({ field: "xs" }, {field: "ys"}, {source: test_ds, text: "Q"});
+            ts.data_source.data = test_ds.data
+            //ts.glyph.x = {field: 'xs'}
+            //ts.glyph.y = {field: 'ys'}
+            console.log(ts)
+            ts.data_source.change.emit()
         } 
       }
      }
