@@ -32,6 +32,8 @@ export class FrontDrawToolView extends PolyToolView {
 
   _draw(ev: UIEvent, mode: string, emit: boolean = false): void {
     const renderer = this.model.renderers[0]
+    const bez = this.model.renderers[1]
+    const bez_ds = bez.data_source
     const point = this._map_drag(ev.sx, ev.sy, renderer)
 
     if (!this._initialized)
@@ -44,11 +46,24 @@ export class FrontDrawToolView extends PolyToolView {
 
     const cds = renderer.data_source
     const glyph: any = renderer.glyph
+    const bez_glyph: any = bez.glyph
     const [xkey, ykey] = [glyph.xs.field, glyph.ys.field]
+    const [x0key, y0key] = [bez_glyph.x0.field, bez_glyph.y0.field]
+    const [cx0key, cy0key] = [bez_glyph.cx0.field, bez_glyph.cy0.field]
+    const [cx1key, cy1key] = [bez_glyph.cx1.field, bez_glyph.cy1.field]
+    const [x1key, y1key] = [bez_glyph.x1.field, bez_glyph.y1.field]
     if (mode == 'new') {
       this._pop_glyphs(cds, this.model.num_objects)
       if (xkey) cds.get_array(xkey).push([x, x])
       if (ykey) cds.get_array(ykey).push([y, y])
+      if (x0key) bez_ds.get_array(x0key).push(null)
+      if (y0key) bez_ds.get_array(y0key).push(null)
+      if (cx0key) bez_ds.get_array(cx0key).push(null)
+      if (cy0key) bez_ds.get_array(cy0key).push(null)
+      if (cx1key) bez_ds.get_array(cx1key).push(null)
+      if (cy1key) bez_ds.get_array(cy1key).push(null)
+      if (x1key) bez_ds.get_array(x1key).push(null)
+      if (y1key) bez_ds.get_array(y1key).push(null)
       this._pad_empty_columns(cds, [xkey, ykey])
     } else if (mode == 'edit') {
       if (xkey) {
@@ -58,6 +73,36 @@ export class FrontDrawToolView extends PolyToolView {
       if (ykey) {
         const ys = cds.data[ykey][cds.data[ykey].length-1]
         ys[ys.length-1] = y
+      }
+      if(xkey && ykey)
+      {
+        //Update Beziér curve
+        const xidx = cds.data[xkey].length-1
+        if(cds.data[xkey][xidx].length > 3)
+        {
+           const beznumber = (cds.data[xkey][xidx].length-1) / 3
+           if((cds.data[xkey][xidx].length-1) % 3 == 0)
+           {
+              const xs = cds.data[xkey][cds.data[xkey].length-1]
+              const ys = cds.data[ykey][cds.data[ykey].length-1]
+              const x0 = bez_ds.data['x0']
+              const y0 = bez_ds.data['y0']
+              const cx0 = bez_ds.data['cx0']
+              const cy0 = bez_ds.data['cy0']
+              const cx1 = bez_ds.data['cx1']
+              const cy1 = bez_ds.data['cy1']
+              const x1 = bez_ds.data['x1']
+              const y1 = bez_ds.data['y1']
+              x0[beznumber] = xs[xs.length-4]
+              y0[beznumber] = ys[ys.length-4]
+              cx0[beznumber] = xs[xs.length-3]
+              cy0[beznumber] = ys[ys.length-3]
+              cx1[beznumber] = xs[xs.length-2]
+              cy1[beznumber] = ys[ys.length-2]
+              x1[beznumber] = xs[xs.length-1]
+              y1[beznumber] = ys[ys.length-1]
+            }
+         }
       }
     } else if (mode == 'add') {
       if (xkey) {
@@ -82,38 +127,49 @@ export class FrontDrawToolView extends PolyToolView {
         }
         ys.push(ny)
       }
-     }
-     const xidx = cds.data[xkey].length-1
-     const yidx = cds.data[ykey].length-1
-     if(cds.data[xkey][xidx].length > 4)
-     {
-         if((cds.data[xkey][xidx].length-2) % 3 == 0)
-         {
-            let xs = cds.get_array<number[]>(xkey)[xidx]
-            let ys = cds.get_array<number[]>(ykey)[yidx]
-               /*x0.push(xs[(xs.length-1) -4])
-               cx0.push(xs[(xs.length-1) -3])
-               cx1.push(xs[(xs.length-1) -2])
-               x1.push(xs[(xs.length-1) -1])*/
-            const text_ds = new ColumnDataSource({ data: { x: [1, 0.5, 2], y: [1, 0.5, 2] , angle: [0,0,0]}})
-            const ts = this.model.renderers[2]
-            ts.data_source.data = text_ds.data
+      if(xkey && ykey)
+      {
+        const xidx = cds.data[xkey].length-1
+        if(cds.data[xkey][xidx].length > 4)
+        {
+           if((cds.data[xkey][xidx].length-2) % 3 == 0)
+           {
+              const xs = cds.data[xkey][cds.data[xkey].length-1]
+              const ys = cds.data[ykey][cds.data[ykey].length-1]
+              const x0 = bez_ds.get_array('x0')
+              const y0 = bez_ds.get_array('y0')
+              const cx0 = bez_ds.get_array('cx0')
+              const cy0 = bez_ds.get_array('cy0')
+              const cx1 = bez_ds.get_array('cx1')
+              const cy1 = bez_ds.get_array('cy1')
+              const x1 = bez_ds.get_array('x1')
+              const y1 = bez_ds.get_array('y1')
+                 /*x0.push(xs[(xs.length-1) -4])
+                 cx0.push(xs[(xs.length-1) -3])
+                 cx1.push(xs[(xs.length-1) -2])
+                 x1.push(xs[(xs.length-1) -1])*/
+              const beznumber = (cds.data[xkey][xidx].length-2) / 3
+              console.log(beznumber)
+              x0[beznumber] = xs[xs.length-5]
+              y0[beznumber] = ys[ys.length-5]
+              cx0[beznumber] = xs[xs.length-4]
+              cy0[beznumber] = ys[ys.length-4]
+              cx1[beznumber] = xs[xs.length-3]
+              cy1[beznumber] = ys[ys.length-3]
+              x1[beznumber] = xs[xs.length-2]
+              y1[beznumber] = ys[ys.length-2]
 
-            //const bez_ds = new ColumnDataSource({ data: { x0: [1], y0: [1] ,x1:[4], y1:[4], cx0:[3.2], cy0:[3.0], cx1:[3.8], cy1:[3.9],}})
-            const bez = this.model.renderers[1]
-            let bez_ds = bez.data_source
-            bez_ds.get_array('x0').push(xs[(xs.length-1) -4])
-            bez_ds.get_array('y0').push(ys[(ys.length-1) -4])
-            bez_ds.get_array('cx0').push(xs[(xs.length-1) -3])
-            bez_ds.get_array('cy0').push(ys[(ys.length-1) -3])
-            bez_ds.get_array('cx1').push(xs[(xs.length-1) -2])
-            bez_ds.get_array('cy1').push(ys[(ys.length-1) -2])
-            bez_ds.get_array('x1').push(xs[(xs.length-1) -1])
-            bez_ds.get_array('y1').push(ys[(ys.length-1) -1])
-            this._emit_cds_changes(bez_ds, true, false, emit)
+
+              const text_ds = new ColumnDataSource({ data: { x: [1, 0.5, 2], y: [1, 0.5, 2] , angle: [0,0,0]}})
+              const ts = this.model.renderers[2]
+              ts.data_source.data = text_ds.data
+
+           }
          }
-      }
-      this._emit_cds_changes(cds, true, false, emit)
+       }
+     }
+     this._emit_cds_changes(bez_ds, true, false, emit)
+     this._emit_cds_changes(cds, true, false, emit)
   }
 
   _show_vertices(): void {

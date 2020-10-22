@@ -21,6 +21,7 @@ plot = figure(x_range=(0, 10), y_range=(0, 10))
 #source = ColumnDataSource(data=dict(xs=[None], ys=[None], x0=[None], y0=[None], x1=[None], y1=[None], cx0=[None], cy0=[None], cx1=[None], cy1=[None],angle=[None]))
 source = ColumnDataSource(data=dict(xs=[], ys=[]))#, x0=[], y0=[], x1=[], y1=[], cx0=[], cy0=[], cx1=[], cy1=[],angle=[]))
 renderers = [
+   #order matters! Typescript assumes multiline, bézier, text_stamp
    plot.multi_line(xs='xs',ys='ys', color="#aaaaaa", line_width=1, source=source),
    plot.bezier(x0='x0', y0='y0', x1='x1', y1='y1', cx0='cx0', cy0='cy0', cx1="cx1", cy1="cy1", source=ColumnDataSource(data=dict(x0=[], y0=[], x1=[], y1=[], cx0=[], cy0=[], cx1=[], cy1=[])), line_color="#d95f02", line_width=2),
    plot.text_stamp(x='x', y='x', color="fuchsia", text=value('A'), source=ColumnDataSource(data=dict(x=[], y=[], angle=[])))
