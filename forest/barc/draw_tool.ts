@@ -44,26 +44,12 @@ export class FrontDrawToolView extends PolyToolView {
 
     const cds = renderer.data_source
     const glyph: any = renderer.glyph
-    //is Beziér
-    //const [xkey, ykey] = [glyph.x0.field, glyph.y0.field]
-    const [xkey, ykey] = ['xs','ys']
-    const [x0key, y0key] = [glyph.x0.field, glyph.y0.field]
-    const [x1key, y1key] = [glyph.x1.field, glyph.y1.field]
-    const [cx0key, cy0key] = [glyph.cx0.field, glyph.cy0.field]
-    const [cx1key, cy1key] = [glyph.cx1.field, glyph.cy1.field]
+    const [xkey, ykey] = [glyph.xs.field, glyph.ys.field]
     if (mode == 'new') {
       this._pop_glyphs(cds, this.model.num_objects)
       if (xkey) cds.get_array(xkey).push([x, x])
       if (ykey) cds.get_array(ykey).push([y, y])
-      if (x0key) cds.get_array(x0key).push([])
-      if (y0key) cds.get_array(y0key).push([])
-      if (x1key) cds.get_array(x1key).push([])
-      if (y1key) cds.get_array(y1key).push([])
-      if (cx0key) cds.get_array(cx0key).push([])
-      if (cy0key) cds.get_array(cy0key).push([])
-      if (cx1key) cds.get_array(cx1key).push([])
-      if (cy1key) cds.get_array(cy1key).push([])
-      this._pad_empty_columns(cds, [xkey, ykey, x0key, y0key, x1key, y1key, cx0key, cy0key, cx1key, cy1key])
+      this._pad_empty_columns(cds, [xkey, ykey])
     } else if (mode == 'edit') {
       if (xkey) {
         const xs = cds.data[xkey][cds.data[xkey].length-1]
@@ -74,157 +60,6 @@ export class FrontDrawToolView extends PolyToolView {
         ys[ys.length-1] = y
       }
     } else if (mode == 'add') {
-     if(glyph.x1.field) //if Bezier
-     {
-      const xidx = cds.data[xkey].length-1
-      let xs = cds.get_array<number[]>(xkey)[xidx]
-      const nx = xs[xs.length-1]
-      xs[xs.length-1] = x
-      if (!isArray(xs)) {
-        xs = Array.from(xs)
-        cds.data[xkey][xidx] = xs
-      }
-      //get columns
-      let x0 = cds.get_array(x0key)
-      let cx0 = cds.get_array(cx0key)
-      let cx1 = cds.get_array(cx1key)
-      let x1 = cds.get_array(x1key)
-      let y0 = cds.get_array(y0key)
-      let cy0 = cds.get_array(cy0key)
-      let cy1 = cds.get_array(cy1key)
-      let y1 = cds.get_array(y1key)
-      let angle = cds.get_array('angle')
-
-      xs.push(nx)
-      if (x0key) {
-        //once there are 4 points, and every three afterwards
-        if((xs.length-1) == 4 || (((xs.length-2) % 3) ==0 && (xs.length-1) > 3))
-        {
-            //push the first value to beziér origin (x0) and so on
-            if(isArray(x0[xidx]))
-            {
-               //contains the empty padding array, replace it
-               x0[xidx] =xs[(xs.length-1) -4]
-            } else {
-               //add an extra one
-               x0.push(xs[(xs.length-1) -4])
-            }
-            //cds.data[x0key][xidx] = xs[(xs.length-1) -4]
-            if(isArray(cx0[xidx]))
-            {
-               //contains the empty padding array, replace it
-               cx0[xidx] =xs[(xs.length-1) -3]
-            } else {
-               //add an extra one
-               cx0.push(xs[(xs.length-1) -3])
-            }
-            //cds.data[cx0key][xidx] = xs[(xs.length-1) -3]
-            if(isArray(cx1[xidx]))
-            {
-               //contains the empty padding array, replace it
-               cx1[xidx] =xs[(xs.length-1) -2]
-            } else {
-               //add an extra one
-               cx1.push(xs[(xs.length-1) -2])
-            }
-            //cds.data[cx1key][xidx] = xs[(xs.length-1) -2]
-            //push current y as x1
-            if(isArray(x1[xidx]))
-            {
-               //contains the empty padding array, replace it
-               x1[xidx] =xs[(xs.length-1) -1]
-            } else {
-               //add an extra one
-               x1.push(xs[(xs.length-1) -1])
-            }
-            //cds.data[x0key][xidx] = xs[(xs.length-1) -4]
-            //cds.data[cx0key][xidx] = xs[(xs.length-1) -3]
-            //cds.data[cx1key][xidx] = xs[(xs.length-1) -2]
-            //push current x as x1
-            //cds.data[x1key][xidx] = xs[(xs.length-1) -1]
-        } 
-      }
-      const yidx = cds.data[ykey].length-1
-      let ys = cds.get_array<number[]>(ykey)[yidx]
-      const ny = ys[ys.length-1]
-      ys[ys.length-1] = y
-      if (!isArray(ys)) {
-        ys = Array.from(ys)
-        cds.data[ykey][yidx] = ys
-      }
-      ys.push(ny) 
-      if (y0key) {
-        if((ys.length-1) ==4 || (((ys.length-2) % 3) ==0 && (ys.length-1) > 3))
-        {
-            //set the first value to beziér origin (y0) and so on
-            if(isArray(y0[yidx]))
-            {
-               //contains the empty padding array, replace it
-               y0[xidx] =ys[(ys.length-1) -4]
-            } else {
-               //add an extra one
-               y0.push(ys[(ys.length-1) -4])
-            }
-            //cds.data[y0key][yidx] = ys[(ys.length-1) -4]
-            if(isArray(cy0[yidx]))
-            {
-               //contains the empty padding array, replace it
-               cy0[xidx] =ys[(ys.length-1) -3]
-            } else {
-               //add an extra one
-               cy0.push(ys[(ys.length-1) -3])
-            }
-            //cds.data[cy0key][yidx] = ys[(ys.length-1) -3]
-            if(isArray(cy1[yidx]))
-            {
-               //contains the empty padding array, replace it
-               cy1[xidx] =ys[(ys.length-1) -2]
-            } else {
-               //add an extra one
-               cy1.push(ys[(ys.length-1) -2])
-            }
-            //cds.data[cy1key][yidx] = ys[(ys.length-1) -2]
-            //push current y as y1
-            if(isArray(y1[yidx]))
-            {
-               //contains the empty padding array, replace it
-               y1[xidx] =ys[(ys.length-1) -1]
-            } else {
-               //add an extra one
-               y1.push(ys[(ys.length-1) -1])
-            }
-            //cds.data[y1key][yidx] = ys[(ys.length-1) -1]
-
-
-            //add padding to columns as required (all must be the same length)
-            let xs_a = cds.get_array(xkey)
-            let ys_a = cds.get_array(ykey)
-            const pad_to = Math.max(...[xs_a.length, ys_a.length, x0.length, y0.length, x1.length, y1.length, cx0.length, cy0.length, cx1.length, cy1.length])
-            const  cols = [xs_a, ys_a, angle]
-            cols.forEach(function(col) {
-               while(col.length < pad_to)
-               {  
-                  col.unshift(Array([]));
-               }
-            })
-            const test_ds = new ColumnDataSource({ data: { x: [1, 0.5, 2], y: [1, 0.5, 2] , angle: [0,0,0]}})
-            const ts = this.model.renderers[2]
-            /*const ts = new Text({
-               x: {field: "xs"},
-               y: {field: "ys"},
-               text: "Q"
-            })*/
-            //console.log(this.parent.model)
-            //this.parent.model.glyphs({ field: "xs" }, {field: "ys"}, {source: test_ds, text: "Q"});
-            ts.data_source.data = test_ds.data
-            //ts.glyph.x = {field: 'xs'}
-            //ts.glyph.y = {field: 'ys'}
-            console.log(ts)
-        } 
-      }
-     }
-     else
-     {
       if (xkey) {
         const xidx = cds.data[xkey].length-1
         let xs = cds.get_array<number[]>(xkey)[xidx]
@@ -248,8 +83,37 @@ export class FrontDrawToolView extends PolyToolView {
         ys.push(ny)
       }
      }
-    }
-    this._emit_cds_changes(cds, true, false, emit)
+     const xidx = cds.data[xkey].length-1
+     const yidx = cds.data[ykey].length-1
+     if(cds.data[xkey][xidx].length > 4)
+     {
+         if((cds.data[xkey][xidx].length-2) % 3 == 0)
+         {
+            let xs = cds.get_array<number[]>(xkey)[xidx]
+            let ys = cds.get_array<number[]>(ykey)[yidx]
+               /*x0.push(xs[(xs.length-1) -4])
+               cx0.push(xs[(xs.length-1) -3])
+               cx1.push(xs[(xs.length-1) -2])
+               x1.push(xs[(xs.length-1) -1])*/
+            const text_ds = new ColumnDataSource({ data: { x: [1, 0.5, 2], y: [1, 0.5, 2] , angle: [0,0,0]}})
+            const ts = this.model.renderers[2]
+            ts.data_source.data = text_ds.data
+
+            //const bez_ds = new ColumnDataSource({ data: { x0: [1], y0: [1] ,x1:[4], y1:[4], cx0:[3.2], cy0:[3.0], cx1:[3.8], cy1:[3.9],}})
+            const bez = this.model.renderers[1]
+            let bez_ds = bez.data_source
+            bez_ds.get_array('x0').push(xs[(xs.length-1) -4])
+            bez_ds.get_array('y0').push(ys[(ys.length-1) -4])
+            bez_ds.get_array('cx0').push(xs[(xs.length-1) -3])
+            bez_ds.get_array('cy0').push(ys[(ys.length-1) -3])
+            bez_ds.get_array('cx1').push(xs[(xs.length-1) -2])
+            bez_ds.get_array('cy1').push(ys[(ys.length-1) -2])
+            bez_ds.get_array('x1').push(xs[(xs.length-1) -1])
+            bez_ds.get_array('y1').push(ys[(ys.length-1) -1])
+            this._emit_cds_changes(bez_ds, true, false, emit)
+         }
+      }
+      this._emit_cds_changes(cds, true, false, emit)
   }
 
   _show_vertices(): void {
