@@ -11,9 +11,6 @@ import {PolyTool, PolyToolView} from "models/tools/edit/poly_tool"
 import {bk_tool_icon_poly_draw} from "styles/icons"
 //import {patch_to_column} from "models/sources/column_data_source"
 
-import {ColumnDataSource} from "models/sources/column_data_source"
-//import {GlyphRenderer} from "models/renderers/glyph_renderer"
-
 export interface HasPolyGlyph {
   glyph: MultiLine | Patches | Bezier
 }
@@ -167,7 +164,8 @@ export class FrontDrawToolView extends PolyToolView {
 
 
               //draw text to fit curve
-              const text_ds = new ColumnDataSource({ data: { x: [], y: [] , angle: []}})
+              const ts = this.model.renderers[2]
+              const text_ds = ts.data_source
 
               //calculate coeffcients (per http://www.planetclegg.com/projects/WarpingTextToSplines.html x0=x0, x1=cx0, x2=cx1, x3=x1 etc.)
               const A = x1[beznumber] - 3*cx1[beznumber] + 3*cx0[beznumber] - x0[beznumber]
@@ -180,16 +178,52 @@ export class FrontDrawToolView extends PolyToolView {
               const G = 3 * cy0[beznumber] - 3 * y0[beznumber]
               const H = y0[beznumber]
 
-              //draw 20 points, text glyph at each one
-              for(var i=0.0; i < 20.0; i+=1.0)
+              //calculate arc-length (approximately)
+              const segments = 20 //number of segments
+              let temp_x = []
+              let temp_y = []
+              let temp_l = [0]
+              for(var i=0; i < segments; i+=1)
               {
-                  let t = i/20.0
+                  let t = i/segments
+                  temp_x.push(A*t**3 + B*t**2 +C*t +D) //At³ + Bt² + Ct + D
+                  temp_y.push(E*t**3 + F*t**2 +G*t +H)
+                  if(i>0){
+                     temp_l.push(Math.sqrt((temp_x[temp_x.length-1]-temp_x[temp_x.length-2])**2 + (temp_y[temp_y.length-1]-temp_y[temp_y.length-2])**2)+temp_l[temp_l.length-1])
+                  }
+              }
+              console.log(temp_l)
+              const total_length = temp_l[temp_l.length-1]
+              const spacing = 2
+
+              //draw points, text glyph at each one
+              for(var i=0.0; i < total_length; i+=spacing)
+              {
+                  //i is target arc length
+                  const i_index = temp_l.findIndex(l => l >= i) || 1 //Index of first element larger or equal to i
+
+
+                  let t = temp_l[i_index] / total_length //default if i is already in the table
+                  if(temp_l[i_index] > i) //if not
+                  {
+                     //interpolate
+                     const segmentFraction = (i - temp_l[i_index-1]) / (temp_l[i_index] - temp_l[i_index-1])
+                     t = (temp_l[i_index -1] + segmentFraction) / total_length  // 1.x × 
+                     if(t > 1) 
+                     {
+                        t= 1;
+                     }
+                  }
+
                   text_ds.get_array('x').push(A*t**3 + B*t**2 +C*t +D) //At³ + Bt² + Ct + D
                   text_ds.get_array('y').push(E*t**3 + F*t**2 +G*t +H)
-                  text_ds.get_array('angle').push(0)
+                  //calculate angle of text 
+                  let dx = 3*A*t**2 + 2*B*t + C //derivatives of previous
+                  let dy = 3*E*t**2 + 2*F*t + G
+                  text_ds.get_array('angle').push(Math.atan2(dy,dx))
               }
-              const ts = this.model.renderers[2]
-              ts.data_source.data = text_ds.data
+              //ts.data_source.data = text_ds.data
+              this._emit_cds_changes(text_ds, true, false, emit)
               
 
            }
