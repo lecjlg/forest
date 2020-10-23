@@ -84,14 +84,14 @@ export class FrontDrawToolView extends PolyToolView {
            {
               const xs = cds.data[xkey][cds.data[xkey].length-1]
               const ys = cds.data[ykey][cds.data[ykey].length-1]
-              const x0 = bez_ds.data['x0']
-              const y0 = bez_ds.data['y0']
-              const cx0 = bez_ds.data['cx0']
-              const cy0 = bez_ds.data['cy0']
-              const cx1 = bez_ds.data['cx1']
-              const cy1 = bez_ds.data['cy1']
-              const x1 = bez_ds.data['x1']
-              const y1 = bez_ds.data['y1']
+              const x0 = bez_ds.data[x0key]
+              const y0 = bez_ds.data[y0key]
+              const cx0 = bez_ds.data[cx0key]
+              const cy0 = bez_ds.data[cy0key]
+              const cx1 = bez_ds.data[cx1key]
+              const cy1 = bez_ds.data[cy1key]
+              const x1 = bez_ds.data[x1key]
+              const y1 = bez_ds.data[y1key]
               const beznumber = x0.length-1
               x0[beznumber] = xs[xs.length-4]
               y0[beznumber] = ys[ys.length-4]
@@ -137,14 +137,14 @@ export class FrontDrawToolView extends PolyToolView {
               //xs and ys are one longer than in the 'edit' stanza
               const xs = cds.data[xkey][cds.data[xkey].length-1]
               const ys = cds.data[ykey][cds.data[ykey].length-1]
-              const x0 = bez_ds.get_array('x0')
-              const y0 = bez_ds.get_array('y0')
-              const cx0 = bez_ds.get_array('cx0')
-              const cy0 = bez_ds.get_array('cy0')
-              const cx1 = bez_ds.get_array('cx1')
-              const cy1 = bez_ds.get_array('cy1')
-              const x1 = bez_ds.get_array('x1')
-              const y1 = bez_ds.get_array('y1')
+              const x0 = bez_ds.get_array(x0key)
+              const y0 = bez_ds.get_array(x0key)
+              const cx0 = bez_ds.get_array(cx0key)
+              const cy0 = bez_ds.get_array(cy0key)
+              const cx1 = bez_ds.get_array(cx1key)
+              const cy1 = bez_ds.get_array(cy1key)
+              const x1 = bez_ds.get_array(x1key)
+              const y1 = bez_ds.get_array(x1key)
               const beznumber = x0.length-1
               console.log(beznumber)
               x0[beznumber] = xs[xs.length-5]
