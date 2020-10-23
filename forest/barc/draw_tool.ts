@@ -137,14 +137,14 @@ export class FrontDrawToolView extends PolyToolView {
               //xs and ys are one longer than in the 'edit' stanza
               const xs = cds.data[xkey][cds.data[xkey].length-1]
               const ys = cds.data[ykey][cds.data[ykey].length-1]
-              const x0 = bez_ds.get_array(x0key)
-              const y0 = bez_ds.get_array(y0key)
-              const cx0 = bez_ds.get_array(cx0key)
-              const cy0 = bez_ds.get_array(cy0key)
-              const cx1 = bez_ds.get_array(cx1key)
-              const cy1 = bez_ds.get_array(cy1key)
-              const x1 = bez_ds.get_array(x1key)
-              const y1 = bez_ds.get_array(y1key)
+              const x0 = bez_ds.get_array<number>(x0key)
+              const y0 = bez_ds.get_array<number>(y0key)
+              const cx0 = bez_ds.get_array<number>(cx0key)
+              const cy0 = bez_ds.get_array<number>(cy0key)
+              const cx1 = bez_ds.get_array<number>(cx1key)
+              const cy1 = bez_ds.get_array<number>(cy1key)
+              const x1 = bez_ds.get_array<number>(x1key)
+              const y1 = bez_ds.get_array<number>(y1key)
               const beznumber = x0.length-1
               console.log(beznumber)
               x0[beznumber] = xs[xs.length-5]
@@ -155,19 +155,42 @@ export class FrontDrawToolView extends PolyToolView {
               cy1[beznumber] = ys[ys.length-3]
               x1[beznumber] = xs[xs.length-2]
               y1[beznumber] = ys[ys.length-2]
-              x0.push(null)
-              y0.push(null)
-              cx0.push(null)
-              cx0.push(null)
-              cx1.push(null)
-              cx1.push(null)
-              x1.push(null)
-              y1.push(null)
+              //add blank entry
+              x0.push(NaN)
+              y0.push(NaN)
+              cx0.push(NaN)
+              cy0.push(NaN)
+              cx1.push(NaN)
+              cy1.push(NaN)
+              x1.push(NaN)
+              y1.push(NaN)
 
 
-              const text_ds = new ColumnDataSource({ data: { x: [1, 0.5, 2], y: [1, 0.5, 2] , angle: [0,0,0]}})
+              //draw text to fit curve
+              const text_ds = new ColumnDataSource({ data: { x: [], y: [] , angle: []}})
+
+              //calculate coeffcients (per http://www.planetclegg.com/projects/WarpingTextToSplines.html x0=x0, x1=cx0, x2=cx1, x3=x1 etc.)
+              const A = x1[beznumber] - 3*cx1[beznumber] + 3*cx0[beznumber] - x0[beznumber]
+              const B = 3 * cx1[beznumber] - 6 * cx0[beznumber] + 3 * x0[beznumber]
+              const C = 3 * cx0[beznumber] - 3 * x0[beznumber]
+              const D = x0[beznumber]
+
+              const E = y1[beznumber] - 3 * cy1[beznumber] + 3 * cy0[beznumber] - y0[beznumber]
+              const F = 3 * cy1[beznumber] - 6 * cy0[beznumber] + 3 * y0[beznumber]
+              const G = 3 * cy0[beznumber] - 3 * y0[beznumber]
+              const H = y0[beznumber]
+
+              //draw 20 points, text glyph at each one
+              for(var i=0.0; i < 20.0; i+=1.0)
+              {
+                  let t = i/20.0
+                  text_ds.get_array('x').push(A*t**3 + B*t**2 +C*t +D) //At³ + Bt² + Ct + D
+                  text_ds.get_array('y').push(E*t**3 + F*t**2 +G*t +H)
+                  text_ds.get_array('angle').push(0)
+              }
               const ts = this.model.renderers[2]
               ts.data_source.data = text_ds.data
+              
 
            }
          }
