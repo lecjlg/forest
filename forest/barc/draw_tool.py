@@ -34,7 +34,7 @@ source.js_on_change('data',
    ));
 
 plot.add_tools(FrontDrawTool(renderers=renderers))
-plot.title.text = "Drag to draw on the plot"
+plot.title.text = "Draw on the plot"
 #plot.bezier(x0=[6.92,1.95], y0=[9.31,8.25], x1=[6.83,4.23], y1=[2.62,5.21], cx0=[2.17,3.15], cy0=[8.21,4.25], cx1=[1.73,2.47], cy1=[4.00,5.00])
 
 show(plot)

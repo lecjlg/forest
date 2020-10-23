@@ -80,7 +80,6 @@ export class FrontDrawToolView extends PolyToolView {
         const xidx = cds.data[xkey].length-1
         if(cds.data[xkey][xidx].length > 3)
         {
-           const beznumber = (cds.data[xkey][xidx].length-1) / 3
            if((cds.data[xkey][xidx].length-1) % 3 == 0)
            {
               const xs = cds.data[xkey][cds.data[xkey].length-1]
@@ -93,6 +92,7 @@ export class FrontDrawToolView extends PolyToolView {
               const cy1 = bez_ds.data['cy1']
               const x1 = bez_ds.data['x1']
               const y1 = bez_ds.data['y1']
+              const beznumber = x0.length-1
               x0[beznumber] = xs[xs.length-4]
               y0[beznumber] = ys[ys.length-4]
               cx0[beznumber] = xs[xs.length-3]
@@ -134,6 +134,7 @@ export class FrontDrawToolView extends PolyToolView {
         {
            if((cds.data[xkey][xidx].length-2) % 3 == 0)
            {
+              //xs and ys are one longer than in the 'edit' stanza
               const xs = cds.data[xkey][cds.data[xkey].length-1]
               const ys = cds.data[ykey][cds.data[ykey].length-1]
               const x0 = bez_ds.get_array('x0')
@@ -144,11 +145,7 @@ export class FrontDrawToolView extends PolyToolView {
               const cy1 = bez_ds.get_array('cy1')
               const x1 = bez_ds.get_array('x1')
               const y1 = bez_ds.get_array('y1')
-                 /*x0.push(xs[(xs.length-1) -4])
-                 cx0.push(xs[(xs.length-1) -3])
-                 cx1.push(xs[(xs.length-1) -2])
-                 x1.push(xs[(xs.length-1) -1])*/
-              const beznumber = (cds.data[xkey][xidx].length-2) / 3
+              const beznumber = x0.length-1
               console.log(beznumber)
               x0[beznumber] = xs[xs.length-5]
               y0[beznumber] = ys[ys.length-5]
@@ -158,6 +155,14 @@ export class FrontDrawToolView extends PolyToolView {
               cy1[beznumber] = ys[ys.length-3]
               x1[beznumber] = xs[xs.length-2]
               y1[beznumber] = ys[ys.length-2]
+              x0.push(null)
+              y0.push(null)
+              cx0.push(null)
+              cx0.push(null)
+              cx1.push(null)
+              cx1.push(null)
+              x1.push(null)
+              y1.push(null)
 
 
               const text_ds = new ColumnDataSource({ data: { x: [1, 0.5, 2], y: [1, 0.5, 2] , angle: [0,0,0]}})
