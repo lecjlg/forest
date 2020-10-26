@@ -179,7 +179,7 @@ export class FrontDrawToolView extends PolyToolView {
               const H = y0[beznumber]
 
               //calculate arc-length (approximately)
-              const segments = 40 //number of segments
+              const segments = 150 //number of segments
               let temp_x = []
               let temp_y = []
               let temp_l = [0]
@@ -192,9 +192,8 @@ export class FrontDrawToolView extends PolyToolView {
                      temp_l.push(Math.sqrt((temp_x[temp_x.length-1]-temp_x[temp_x.length-2])**2 + (temp_y[temp_y.length-1]-temp_y[temp_y.length-2])**2)+temp_l[temp_l.length-1])
                   }
               }
-              console.log(temp_l)
               const total_length = temp_l[temp_l.length-1]
-              const spacing = 2
+              const spacing = 1
 
               //draw points, text glyph at each one
               for(var i=0.0; i < total_length; i+=spacing)
@@ -209,10 +208,11 @@ export class FrontDrawToolView extends PolyToolView {
                      //interpolate
                      const segmentFraction = (i - temp_l[i_index-1]) / (temp_l[i_index] - temp_l[i_index-1])
                      t = (temp_l[i_index -1] + segmentFraction) / total_length  // 1.x × 
-                     if(t > 1) 
-                     {
-                        t= 1;
-                     }
+                     console.log([t])
+                  }
+                  if(t > 1) 
+                  {
+                     t= 1;
                   }
 
                   text_ds.get_array('x').push(A*t**3 + B*t**2 +C*t +D) //At³ + Bt² + Ct + D
