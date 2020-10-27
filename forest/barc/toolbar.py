@@ -38,8 +38,8 @@ class BARC:
             title='Select stamp colour:', width=350, name="barc_colours", color=self.starting_colour)
         # Dropdown Menu of stamp categories
         self.stamp_categories=["group0", "group1 - general meteorological symbols", "group2 - general meteorological symbols", "group3 - Precipitation fog ice fog or thunderstorm",
-                               "group4 - Duststorm sandstorm drifting or blowing snow", "group5 - Fog or ice fog at the time of observation", "group6 - Drizzle", "group7",
-                               "group8", "group9", "typhoons"]
+                               "group4 - Duststorm sandstorm drifting or blowing snow", "group5 - Fog or ice fog at the time of observation", "group6 - Drizzle", "group7 - Rain",
+                               "group8 - Solid precipitation not in showers", "group9", "typhoons"]
         self.dropDown = Select(title="Stamp Category to display:", width=350,
                                value="group0",
                                options=self.stamp_categories)
@@ -123,9 +123,9 @@ class BARC:
             self.glyphs = glyphcodes[50:60]
         elif str(new) == "group6 - Drizzle":
             self.glyphs = glyphcodes[60:70]
-        elif str(new) == "group7":
+        elif str(new) == "group7 - Rain":
             self.glyphs = glyphcodes[70:80]
-        elif str(new) == "group8":
+        elif str(new) == "group8 - Solid precipitation not in showers":
             self.glyphs = glyphcodes[80:90]
         elif str(new) == "group9":
             self.glyphs = glyphcodes[90:100]
