@@ -37,7 +37,7 @@ class BARC:
         self.colourPicker = bokeh.models.widgets.ColorPicker(
             title='Select stamp colour:', width=350, name="barc_colours", color=self.starting_colour)
         # Dropdown Menu of stamp categories
-        self.stamp_categories=["group0", "group1", "group2", "group3",
+        self.stamp_categories=["group0", "group1 general", "group2 general", "group3",
                                "group4", "group5", "group6", "group7",
                                "group8", "group9", "typhoons"]
         self.dropDown = Select(title="Stamp Category to display:", width=350,
@@ -111,9 +111,9 @@ class BARC:
         # Fonts and icon mapping to go here
         if str(new) == "group0":
             self.glyphs = glyphcodes[0:10]
-        elif str(new) == "group1":
+        elif str(new) == "group1 general":
             self.glyphs = glyphcodes[10:19]
-        elif str(new) == "group2":
+        elif str(new) == "group2 general":
             self.glyphs = glyphcodes[20:30]
         elif str(new) == "group3":
             self.glyphs = glyphcodes[30:40]
