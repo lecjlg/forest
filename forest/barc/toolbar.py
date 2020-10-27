@@ -111,7 +111,7 @@ class BARC:
         # Fonts and icon mapping to go here
         if str(new) == "group0":
             self.glyphs = glyphcodes[0:10]
-        elif str(new) == "group1  - general meteorological symbols":
+        elif str(new) == "group1 - general meteorological symbols":
             self.glyphs = glyphcodes[10:19]
         elif str(new) == "group2 - general meteorological symbols":
             self.glyphs = glyphcodes[20:30]
