@@ -37,11 +37,11 @@ class BARC:
         self.colourPicker = bokeh.models.widgets.ColorPicker(
             title='Select stamp colour:', width=350, name="barc_colours", color=self.starting_colour)
         # Dropdown Menu of stamp categories
-        self.stamp_categories=["group0", "group1 - general meteorological symbols", "group2 - Precipitation fog ice fog or thunderstorm", "group3 - Duststorm sandstorm drifting or blowing snow",
+        self.stamp_categories=["group0 - General meteorological symbols", "group1 - General meteorological symbols", "group2 - Precipitation fog ice fog or thunderstorm", "group3 - Duststorm sandstorm drifting or blowing snow",
                                "group4 - Fog or ice fog at the time of observation", "group5 - Drizzle", "group6 - Rain", "group7 - Solid precipitation not in showers",
                                "group8 - Showery precipitation or precipitation with recent thunderstorm", "group9 - Thunderstorms", "typhoons"]
         self.dropDown = Select(title="Stamp Category to display:", width=350,
-                               value="group0",
+                               value="group0 - General meteorological symbols",
                                options=self.stamp_categories)
         self.dropDown.on_change("value", self.call)
         # Save area
@@ -109,9 +109,9 @@ class BARC:
         glyphcodes =self.allglyphs
         # Range of glyphs
         # Fonts and icon mapping to go here
-        if str(new) == "group0":
+        if str(new) == "group0 - General meteorological symbols":
             self.glyphs = glyphcodes[0:10]
-        elif str(new) == "group1 - general meteorological symbols":
+        elif str(new) == "group1 - General meteorological symbols":
             self.glyphs = glyphcodes[10:19]
         elif str(new) == "group2 - Precipitation fog ice fog or thunderstorm":
             self.glyphs = glyphcodes[20:30]
