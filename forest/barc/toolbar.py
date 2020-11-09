@@ -540,6 +540,13 @@ class BARC:
             'poly_edit': 'poly_edit',
             'textbox': 'textbox',
         }
+        buttonsubspec1 = {
+
+            'freehand': "freehand",
+            'poly_draw': 'poly_draw',
+            'poly_edit': 'poly_edit',
+            'textbox': 'textbox',
+        }
         buttons1 = []
         for each in buttonspec1:
             button = bokeh.models.widgets.Button(
@@ -549,13 +556,14 @@ class BARC:
                 aspect_ratio=1,
                 margin=(0, 0, 0, 0)
             )
-            button.js_on_event(ButtonClick,
-            bokeh.models.CustomJS(args=dict(
-            buttons=list(toolBarBoxes.select({'tags': ['barc' + each]}))),
-            code="""
-                var each;
-                for(each of buttons) { each.active = true; }
-            """))
+            if each in buttonsubspec1:
+                button.js_on_event(ButtonClick,
+                bokeh.models.CustomJS(args=dict(
+                buttons=list(toolBarBoxes.select({'tags': ['barc' + each]}))),
+                code="""
+                    var each;
+                    for(each of buttons) { each.active = true; }
+                    """))
             buttons1.append(button)
 
         buttonspec2 = {
