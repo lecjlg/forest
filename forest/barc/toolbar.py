@@ -112,6 +112,7 @@ class BARC:
         )
         # from BARC.woff take the index dictionary
         # James's icons correspond pw-000 - pw-099 glyph index 2 to 101
+        # James's icons correspond pw-100 - pw-109 glyph index 114 to 123
         glyphIndexMap = {"983040": 2, "983041": 3, "983042": 4, "983043": 5,
                          "983044": 6, "983045": 7, "983046": 8, "983047": 9,
                          "983048": 10, "983049": 11, "983079": 12, "983080": 13,
@@ -594,9 +595,9 @@ class BARC:
 
         self.barcTools.children.append(bokeh.layouts.grid(buttons1, ncols=7))
         self.barcTools.children.append(bokeh.layouts.grid(buttons2, ncols=5))
-        self.barcTools.children.extend([self.dropDown])
         self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=5)
         self.barcTools.children.append(self.glyphrow)
+        self.barcTools.children.extend([self.dropDown])
         self.barcTools.children.extend(
             [self.colourPicker, self.widthPicker, self.saveButton, self.saveArea])
         self.barcTools.children.append(toolBarBoxes)
