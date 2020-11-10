@@ -37,11 +37,11 @@ class BARC:
         self.colourPicker = bokeh.models.widgets.ColorPicker(
             title='Select stamp colour:', width=350, name="barc_colours", color=self.starting_colour)
         # Dropdown Menu of stamp categories
-        self.stamp_categories=["group0 - General meteorological symbols", "group1 - General meteorological symbols", "group2 - Precipitation fog ice fog or thunderstorm", "group3 - Duststorm sandstorm drifting or blowing snow",
-                               "group4 - Fog or ice fog at the time of observation", "group5 - Drizzle", "group6 - Rain", "group7 - Solid precipitation not in showers",
-                               "group8 - Showery precipitation or precipitation with recent thunderstorm", "group9 - Thunderstorms", "typhoons"]
-        self.dropDown = Select(title="Stamp Category to display:", width=350,
-                               value="group0 - General meteorological symbols",
+        self.stamp_categories=["Group0 - General meteorological symbols", "Group1 - General meteorological symbols", "Group2 - Precipitation fog ice fog or thunderstorm", "Group3 - Duststorm sandstorm drifting or blowing snow",
+                               "Group4 - Fog or ice fog at the time of observation", "Group5 - Drizzle", "Group6 - Rain", "Group7 - Solid precipitation not in showers",
+                               "Group8 - Showery precipitation or precipitation with recent thunderstorm", "Group9 - Thunderstorms", "Group10 - Typhoons"]
+        self.dropDown = Select(title="Meteorological symbols", width=350,
+                               value="Group0 - General meteorological symbols",
                                options=self.stamp_categories)
         self.dropDown.on_change("value", self.call)
         # Save area
@@ -109,27 +109,27 @@ class BARC:
         glyphcodes =self.allglyphs
         # Range of glyphs
         # Fonts and icon mapping to go here
-        if str(new) == "group0 - General meteorological symbols":
+        if str(new) == "Group0 - General meteorological symbols":
             self.glyphs = glyphcodes[0:10]
-        elif str(new) == "group1 - General meteorological symbols":
+        elif str(new) == "Group1 - General meteorological symbols":
             self.glyphs = glyphcodes[10:19]
-        elif str(new) == "group2 - Precipitation fog ice fog or thunderstorm":
+        elif str(new) == "Group2 - Precipitation fog ice fog or thunderstorm":
             self.glyphs = glyphcodes[20:30]
-        elif str(new) == "group3 - Duststorm sandstorm drifting or blowing snow":
+        elif str(new) == "Group3 - Duststorm sandstorm drifting or blowing snow":
             self.glyphs = glyphcodes[30:40]
-        elif str(new) == "group4 - Fog or ice fog at the time of observation":
+        elif str(new) == "Group4 - Fog or ice fog at the time of observation":
             self.glyphs = glyphcodes[40:50]
-        elif str(new) == "group5 - Drizzle":
+        elif str(new) == "Group5 - Drizzle":
             self.glyphs = glyphcodes[50:60]
-        elif str(new) == "group6 - Rain":
+        elif str(new) == "Group6 - Rain":
             self.glyphs = glyphcodes[60:70]
-        elif str(new) == "group7 - Solid precipitation not in showers":
+        elif str(new) == "Group7 - Solid precipitation not in showers":
             self.glyphs = glyphcodes[70:80]
-        elif str(new) == "group8 - Showery precipitation or precipitation with recent thunderstorm":
+        elif str(new) == "Group8 - Showery precipitation or precipitation with recent thunderstorm":
             self.glyphs = glyphcodes[80:90]
-        elif str(new) == "group9 - Thunderstorms":
+        elif str(new) == "Group9 - Thunderstorms":
             self.glyphs = glyphcodes[90:100]
-        elif str(new) == "typhoons":
+        elif str(new) == "Group10 - Typhoons":
             # coming soon
             self.glyphs =  glyphcodes[90:100]
 
