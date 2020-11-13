@@ -139,7 +139,7 @@ class BARC:
                          "983393": 94, "983394": 95, "983395": 96, "983396": 97,
                          "983397": 98, "983398": 99, "983399": 100, "983400": 101,
                          "983508":114,"983509":115,"983510":116,"983511":117,
-                         "983512":118,"983513":119,"983548":120,"983547":121,
+                         "983512":118,"983513":119,"983547":120,"983548":121,
                          "983549":122,"983550":123}
         glyphcodes = list(map(int, list(glyphIndexMap.keys())))
         self.allglyphs = glyphcodes
@@ -194,6 +194,54 @@ class BARC:
         self.set_glyphs()
         self.glyphrow = bokeh.layouts.grid(self.display_glyphs(), ncols=5)
         self.barcTools.children.insert(2, self.glyphrow)
+
+
+    def polyLine(self):
+        '''
+            Creates a freehand tool for drawing on the Forest maps.
+
+            :returns: a FreehandDrawTool instance
+        '''
+        # colour picker means no longer have separate colour line options
+        render_lines = []
+        self.source['polyline'].add([], "colour")
+        self.source['polyline'].add([], "width")
+        for figure in self.figures:
+            render_lines.append(figure.multi_line(
+                xs="xs",
+                ys="ys",
+                line_width="width",
+                source=self.source['polyline'],
+                alpha=0.3,
+                color="colour", level="overlay")
+            )
+
+        tool2 = FreehandDrawTool(
+            renderers=[render_lines[0]],
+            tags=['barcfreehand'],
+            name="barcfreehand"
+        )
+        self.source['polyline'].js_on_change('data',
+            bokeh.models.CustomJS(args=dict(datasource=self.source['polyline'],
+            colourPicker=self.colourPicker, widthPicker=self.widthPicker,
+            saveArea=self.saveArea, sources=self.source), code="""
+                for(var g = 0; g < datasource.data['colour'].length; g++)
+                {
+                    if(!datasource.data['colour'][g])
+                    {
+                        datasource.data['colour'][g] = colourPicker.color;
+                    }
+                    if(!datasource.data['width'][g])
+                    {
+                        datasource.data['width'][g] = widthPicker.value;
+                    }
+                }
+                """)
+                                             )
+
+        return tool2
+
+
 
     def polyLine(self):
         '''
@@ -500,6 +548,7 @@ class BARC:
         for i, figure in enumerate(self.figures):
             barc_tools = []
             figure.add_tools(
+                bokeh.models.tools.UndoTool(tags=['barchelp_icon']),
                 bokeh.models.tools.UndoTool(tags=['barcundo']),
                 bokeh.models.tools.RedoTool(tags=['barcredo']),
                 bokeh.models.tools.ZoomInTool(tags=['barczoom_in']),
@@ -530,6 +579,7 @@ class BARC:
         toolBarBoxes = bokeh.models.layouts.Column(children=toolBarList)
         self.toolBarBoxes = toolBarBoxes
         buttonspec1 = {
+            'help_icon': 'help_icon',
             'undo': 'undo',
             'redo': 'redo',
             'zoom_in': 'zoom_in',
