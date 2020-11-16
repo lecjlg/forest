@@ -17,11 +17,15 @@ div.barc_p div p {
 }
 
 div#diagrams.diagrams div.barc-button {
+  padding:1px
+  border:3px;
   display: inline-block;
 }
 
 div#diagrams.diagrams div.barc-button.barc-zoom_in-button button {
   background-image: url("icons/navtools/zoomin.png");
+  width: 150px;
+  border-radius:4px;
   color: transparent !important;
 }
 
